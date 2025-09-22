@@ -52,3 +52,17 @@ tbl1<-skim(df)
 tbl1 # Resumen compacto por variable
 ```
 
+```{r}
+#| label: ggpairs
+#| fig-cap: "Matriz de dispersión y correlación de las variables cuantitativas."
+num_df <- df %>% select(where(is.numeric))
+Fig1<- GGally::ggpairs(
+  df,
+  columns = 1:4, # solo variables numéricas
+  mapping = aes(color = species), # color por especie
+  upper = list(continuous = wrap("cor", size = 3)),
+  diag = list(continuous = wrap("densityDiag", alpha = 0.6))
+)
+Fig1
+```
+
