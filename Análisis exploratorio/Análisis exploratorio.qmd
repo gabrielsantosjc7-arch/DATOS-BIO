@@ -38,3 +38,17 @@ library(knitr)       # Tablas en Quarto
 library(kableExtra)  # Tablas formateadas para informes
 ```
 
+```{r}
+#|label: data-load
+
+# Carga de datos (ejemplo iris) y limpieza mínima
+data("iris")
+df <- as_tibble(iris) %>% 
+  janitor::clean_names()   # convierte a snake_case: sepal_length, etc.
+
+# Información básica
+n_rows <- nrow(df); n_cols <- ncol(df)
+tbl1<-skim(df) 
+tbl1 # Resumen compacto por variable
+```
+
