@@ -66,3 +66,30 @@ Fig1<- GGally::ggpairs(
 Fig1
 ```
 
+```{r}
+#| label: caja y bigotes
+#| fig-cap: "Distribución de variables morfométricas en tres especies de Iris."
+# Pasar el dataset a formato largo
+iris_long <- df %>%
+  pivot_longer(cols = -species,
+               names_to = "Variable",
+               values_to = "Valor")
+
+# Gráfico unificado
+Fig2 <- ggplot(iris_long, aes(x = species, y = Valor, fill = species)) +
+  geom_boxplot(outlier.shape = 21, alpha = 0.7) +
+  facet_wrap(~ Variable, scales = "free_y") +
+  labs(
+    title = "Comparación de variables morfométricas en especies de Iris",
+    x = "Especies",
+    y = "Valor (cm)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none",
+    strip.text = element_text(face = "bold")
+  )
+Fig2
+
+```
