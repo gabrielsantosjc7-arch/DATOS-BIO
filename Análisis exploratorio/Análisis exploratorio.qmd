@@ -123,3 +123,29 @@ levene_petal_length
 levene_petal_width
 ```
 
+### Outliers multivariados
+
+```{r}
+
+# Outliers multivariados (Mahalanobis global y robusto)
+X <- df[,1:4]
+
+center_global <- colMeans(X)
+cov_global <- cov(X)
+d2_global <- mahalanobis(X, center_global, cov_global)
+threshold_global <- qchisq(0.975, df = ncol(X))
+
+mcd <- covMcd(X) # robusto
+d2_robust <- mahalanobis(X, center = mcd$center, cov = mcd$cov)
+threshold_robust <- qchisq(0.975, df = ncol(X))
+
+df_out <- df %>%
+  mutate(
+    d2_global = d2_global,
+    is_out_global = d2_global > threshold_global,
+    d2_robust = d2_robust,
+    is_out_robust = d2_robust > threshold_robust
+  )
+
+table(df_out$is_out_global)
+table(df_out$is_out_robust)
