@@ -254,48 +254,50 @@
 \FunctionTok{library}\NormalTok{(ggplot2)     }\CommentTok{\# Gráficos profesionales}
 \FunctionTok{library}\NormalTok{(skimr)       }\CommentTok{\# EDA rápido y completo (skim())}
 \FunctionTok{library}\NormalTok{(GGally)      }\CommentTok{\# Matriz de gráficos para variables múltiples}
+\FunctionTok{library}\NormalTok{(car)         }\CommentTok{\# Homocedasticidad (Levene)}
+\FunctionTok{library}\NormalTok{(MVN)         }\CommentTok{\# Normalidad multivariada }
+\FunctionTok{library}\NormalTok{(robustbase)  }\CommentTok{\# Detección de outliers}
 \FunctionTok{library}\NormalTok{(knitr)       }\CommentTok{\# Tablas en Quarto}
 \FunctionTok{library}\NormalTok{(kableExtra)  }\CommentTok{\# Tablas formateadas para informes}
 \end{Highlighting}
 \end{Shaded}
 
-\section{Contexto del proyecto}\label{contexto-del-proyecto}
+\section{Contexto general del
+proyecto}\label{contexto-general-del-proyecto}
 
-Se realizó una exploración y control de calidad de los datos de entrada
-para identificar variables relevantes, evaluar supuestos básicos y
-priorizar rutas analíticas. El objetivo es generar una guía reproducible
-que permita a futuros analistas (o a un equipo de consultoría) replicar
-y ampliar los análisis según objetivos específicos (p.~ej. comparar
-tratamientos, modelar abundancias o construir índices de condición).
+El presente proyecto corresponde a un análisis exploratorio de datos
+morfométricos de tres especies del género \emph{Iris} (\emph{Iris
+setosa}, \emph{Iris versicolor} e \emph{Iris virginica}). Este conjunto
+de datos, ampliamente utilizado en estadística y aprendizaje automático,
+contiene mediciones de longitud y anchura de sépalos y pétalos en un
+total de 150 individuos (50 por especie).
+
+El objetivo principal del análisis es describir y comparar la variación
+morfológica entre especies, evaluando qué rasgos vegetativos (sépalos) y
+reproductivos (pétalos) permiten una mejor discriminación taxonómica.
+
+El trabajo se estructura en tres ejes:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Análisis descriptivo univariado y multivariado}: resumen
+  numérico, visualizaciones (diagramas de dispersión, histogramas,
+  gráficos de caja) y medidas de correlación.\\
+\item
+  \textbf{Evaluación de supuestos estadísticos}: normalidad univariada y
+  multivariada, homocedasticidad, detección de valores atípicos. Esto
+  permite fundamentar el uso de correlaciones paramétricas (Pearson) o
+  no paramétricas (Spearman).\\
+\item
+  \textbf{Interpretación ecológica de resultados}: se discute el valor
+  discriminante de cada variable morfométrica, así como el significado
+  biológico de los patrones encontrados.
+\end{enumerate}
 
 \section{Carga y verificación inicial de
 datos}\label{carga-y-verificaciuxf3n-inicial-de-datos}
-
-El dataset contiene \textbf{N = 150 observaciones} y \textbf{5
-variables}. Cuatro son cuantitativas continuas en centímetros
-(\emph{Sepal.Length, Sepal.Width, Petal.Length, Petal.Width}), y una
-categórica (\emph{Species}), que clasifica en tres grupos balanceados (n
-= 50 por especie). No se detectaron valores faltantes ni duplicados tras
-la inspección inicial. Esta estructura balanceada y sin NA permite
-aplicar análisis univariados, comparativos y multivariados con mínimo
-preprocesamiento.
-
-La \textbf{Tabla 1} de estadísticos descriptivos muestra lo siguiente:
-
-\begin{itemize}
-\item
-  \textbf{Sepal.Length:} media ≈ 5.84 cm, SD ≈ 0.83, rango 4.3--7.9.
-  Variación moderada, con solapamiento esperado entre especies.
-\item
-  \textbf{Sepal.Width:} media ≈ 3.06 cm, SD ≈ 0.44, rango 2.0--4.4. Es
-  la variable más estable, aunque con ligera asimetría negativa.
-\item
-  \textbf{Petal.Length:} media ≈ 3.76 cm, SD ≈ 1.77, rango 1.0--6.9.
-  Mayor dispersión relativa, con clara separación de \emph{setosa}.
-\item
-  \textbf{Petal.Width:} media ≈ 1.20 cm, SD ≈ 0.76, rango 0.1--2.5. Alta
-  variabilidad, con potencial de discriminación entre las tres especies.
-\end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -413,6 +415,32 @@ petal\_width & 0 & 1 & 1.20 & 0.76 & 0.1 & 0.3 & 1.30 & 1.8 & 2.5 &
 ▇▁▇▅▃ \\
 \end{longtable}
 
+El dataset contiene \textbf{N = 150 observaciones} y \textbf{5
+variables}. Cuatro son cuantitativas continuas en centímetros
+(\emph{Sepal.Length, Sepal.Width, Petal.Length, Petal.Width}), y una
+categórica (\emph{Species}), que clasifica en tres grupos balanceados (n
+= 50 por especie). No se detectaron valores faltantes ni duplicados tras
+la inspección inicial. Esta estructura balanceada y sin NA permite
+aplicar análisis univariados, comparativos y multivariados con mínimo
+preprocesamiento.
+
+La \textbf{Tabla 1} de estadísticos descriptivos muestra lo siguiente:
+
+\begin{itemize}
+\item
+  \textbf{Sepal.Length:} media ≈ 5.84 cm, SD ≈ 0.83, rango 4.3--7.9.
+  Variación moderada, con solapamiento esperado entre especies.
+\item
+  \textbf{Sepal.Width:} media ≈ 3.06 cm, SD ≈ 0.44, rango 2.0--4.4. Es
+  la variable más estable, aunque con ligera asimetría negativa.
+\item
+  \textbf{Petal.Length:} media ≈ 3.76 cm, SD ≈ 1.77, rango 1.0--6.9.
+  Mayor dispersión relativa, con clara separación de \emph{setosa}.
+\item
+  \textbf{Petal.Width:} media ≈ 1.20 cm, SD ≈ 0.76, rango 0.1--2.5. Alta
+  variabilidad, con potencial de discriminación entre las tres especies.
+\end{itemize}
+
 Aspectos destacados del dataset:
 
 \begin{itemize}
@@ -435,17 +463,19 @@ Aspectos destacados del dataset:
 \section{Matriz de correlaciones y distribuciones entre variables
 numéricas}\label{matriz-de-correlaciones-y-distribuciones-entre-variables-numuxe9ricas}
 
-La \textbf{Figura 1} combina tres tipos de información: distribuciones
-univariadas, relaciones bivariadas y correlacciones númericas.
+Las \textbf{Figuras 1 y 2} combina tres tipos de información:
+distribuciones univariadas, relaciones bivariadas y correlacciones
+númericas.
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Correlación paramétrica (Pearson en ggpairs)}
 \NormalTok{num\_df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric))}
 \NormalTok{Fig1}\OtherTok{\textless{}{-}}\NormalTok{ GGally}\SpecialCharTok{::}\FunctionTok{ggpairs}\NormalTok{(}
 \NormalTok{  df,}
   \AttributeTok{columns =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{, }\CommentTok{\# solo variables numéricas}
   \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{color =}\NormalTok{ species), }\CommentTok{\# color por especie}
-  \AttributeTok{upper =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"cor"}\NormalTok{, }\AttributeTok{size =} \DecValTok{3}\NormalTok{)),}
+  \AttributeTok{upper =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"cor"}\NormalTok{, }\AttributeTok{method =} \StringTok{"pearson"}\NormalTok{, }\AttributeTok{size =} \DecValTok{3}\NormalTok{)),}
   \AttributeTok{diag =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"densityDiag"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{))}
 \NormalTok{)}
 \NormalTok{Fig1}
@@ -459,7 +489,35 @@ univariadas, relaciones bivariadas y correlacciones númericas.
 }
 
 \caption{Matriz de dispersión y correlación de las variables
-cuantitativas.}
+cuantitativas (Pearson).}
+
+\end{figure}%
+
+Dado que no se cumple normalidad, también se empleó el método de
+Spearman para estimar las correlaciones.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Correlación no paramétrica (Spearman en ggpairs)}
+\NormalTok{Fig2 }\OtherTok{\textless{}{-}} \FunctionTok{ggpairs}\NormalTok{(}
+\NormalTok{  df,}
+  \AttributeTok{columns =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{,}
+  \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{color =}\NormalTok{ species),}
+  \AttributeTok{upper =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"cor"}\NormalTok{, }\AttributeTok{method =} \StringTok{"spearman"}\NormalTok{, }\AttributeTok{size =} \DecValTok{3}\NormalTok{)),}
+  \AttributeTok{diag =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"densityDiag"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{))}
+\NormalTok{)}
+\NormalTok{Fig2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \pandocbounded{\includegraphics[keepaspectratio]{Análisis-exploratorio_files/figure-pdf/ggpairs 2-1.pdf}}
+
+}
+
+\caption{Matriz de dispersión y correlación de las variables
+cuantitativas (Spearman).}
 
 \end{figure}%
 
@@ -467,69 +525,68 @@ cuantitativas.}
 univariadas}\label{distribuciones-univariadas}
 
 \begin{itemize}
-\tightlist
 \item
-  \textbf{Sepal.Length}:
+  \textbf{Sepal.Length:}
 
   \begin{itemize}
   \tightlist
   \item
-    \emph{Setosa}: concentrada en valores bajos (4.3 - 5.8 cm), muy
+    \emph{Setosa} concentrada en valores bajos (4.3--5.8 cm), muy
     homogénea.\\
   \item
-    \emph{Versicolor}: rango intermedio (≈ 4.9 - 7.0 cm).\\
+    \emph{Versicolor} rango intermedio (≈ 4.9--7.0 cm).\\
   \item
-    \emph{Virginica}: valores altos (≈ 4.9 - 7.9 cm), con ligera
-    superposición con Versicolor.\\
-  \item
-    \textbf{Interpretación}: útil para separar \emph{Setosa}, pero
-    \emph{Versicolor} y \emph{Virginica} se solapan.
+    \emph{Virginica} valores altos (≈ 4.9--7.9 cm), con ligera
+    superposición con Versicolor.
   \end{itemize}
+
+  \textbf{Interpretación:} útil para separar Setosa, pero Versicolor y
+  Virginica se solapan.
 \item
-  \textbf{Sepal.Width}:
+  \textbf{Sepal.Width:}
 
   \begin{itemize}
   \tightlist
   \item
     Distribución amplia en todas las especies.\\
   \item
-    \emph{Setosa} tiende a mayores valores promedio, pero con
-    solapamiento considerable.\\
-  \item
-    \textbf{Interpretación}: poco poder discriminante, refleja
-    variabilidad natural en la anchura del sépalo.
+    \emph{Setosa} tiende a valores promedio mayores, pero con
+    solapamiento considerable.
   \end{itemize}
+
+  \textbf{Interpretación:} bajo poder discriminante, refleja
+  variabilidad natural.
 \item
-  \textbf{Petal.Length}:
+  \textbf{Petal.Length:}
 
   \begin{itemize}
   \tightlist
   \item
-    \emph{Setosa}: valores muy bajos (≈ 1.0 - 1.9 cm), sin solapamiento
-    con las otras especies.\\
+    \emph{Setosa} muy bajos (≈ 1.0--1.9 cm), sin solapamiento con otras
+    especies.\\
   \item
-    \emph{Versicolor}: rango medio (≈ 3.0 - 5.1 cm).\\
+    \emph{Versicolor} rango medio (≈ 3.0--5.1 cm).\\
   \item
-    \emph{Virginica}: valores altos (≈ 4.5 - 6.9 cm).\\
-  \item
-    \textbf{Interpretación}: variable clave, separa \emph{Setosa} y
-    discrimina bastante bien \emph{Versicolor} vs \emph{Virginica}.
+    \emph{Virginica} altos (≈ 4.5--6.9 cm).
   \end{itemize}
+
+  \textbf{Interpretación:} variable clave, separa Setosa y discrimina
+  relativamente bien Versicolor vs Virginica.
 \item
-  \textbf{Petal.Width}:
+  \textbf{Petal.Width:}
 
   \begin{itemize}
   \tightlist
   \item
-    \emph{Setosa}: valores muy bajos (≈ 0.1 - 0.6 cm).\\
+    \emph{Setosa} muy bajos (≈ 0.1--0.6 cm).\\
   \item
-    \emph{Versicolor}: rango medio (≈ 1.0 - 1.8 cm).\\
+    \emph{Versicolor} rango medio (≈ 1.0--1.8 cm).\\
   \item
-    \emph{Virginica}: valores altos (≈ 1.4 - 2.5 cm).\\
-  \item
-    \textbf{Interpretación}: la más robusta para separar las tres
-    especies, casi sin solapamiento.
+    \emph{Virginica} altos (≈ 1.4--2.5 cm).
   \end{itemize}
+
+  \textbf{Interpretación:} la más robusta para separar las tres
+  especies, casi sin solapamiento.
 \end{itemize}
 
 \subsection{Relaciones bivariadas}\label{relaciones-bivariadas}
@@ -537,117 +594,72 @@ univariadas}\label{distribuciones-univariadas}
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Sepal.Length vs Sepal.Width}: gran solapamiento entre
-  especies, con nubes de puntos mezcladas. \emph{Setosa} muestra ligera
-  tendencia a sépalos más anchos.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: baja capacidad de discriminación.
-  \end{itemize}
+  \textbf{Sepal.Length vs Sepal.Width:} nubes muy mezcladas → baja
+  capacidad de discriminación.\\
 \item
-  \textbf{Sepal.Length vs Petal.Length}: patrón positivo moderado.
-  \emph{Setosa} queda claramente apartada (pétalos muy cortos).
-  \emph{Versicolor} y \emph{Virginica} siguen una línea ascendente, con
-  solapamiento parcial.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: ayuda a diferenciar \emph{Setosa}, pero no
-    tanto entre las otras dos.
-  \end{itemize}
+  \textbf{Sepal.Length vs Petal.Length:} relación positiva moderada;
+  Setosa queda aislada por pétalos cortos.\\
 \item
-  \textbf{Sepal.Length vs Petal.Width}: tendencia positiva clara.
-  \emph{Setosa} aislada (pétalos estrechos). \emph{Virginica} tiende a
-  valores más altos.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: más útil que \emph{Sepal.Length} solo, pero
-    aún con solapamientos.
-  \end{itemize}
+  \textbf{Sepal.Length vs Petal.Width:} tendencia positiva clara; ayuda
+  a diferenciar más que Sepal.Length solo, aunque con solapamientos.\\
 \item
-  \textbf{Sepal.Width vs Petal.Length}: relación débil, nubes muy
-  mezcladas. \emph{Setosa} separada por bajos valores de pétalo, no por
-  el sépalo.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: variable \emph{Sepal.Width} poco
-    informativa.
-  \end{itemize}
+  \textbf{Sepal.Width vs Petal.Length / Petal.Width:} relaciones
+  débiles, confirman poco valor discriminante del sépalo.\\
 \item
-  \textbf{Sepal.Width vs Petal.Width}: relación débil, con gran
-  dispersión. \emph{Setosa} se distingue porque tiene pétalos angostos,
-  no por anchura del sépalo.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: no aporta discriminación extra.
-  \end{itemize}
-\item
-  \textbf{Petal.Length vs Petal.Width}: relación lineal muy fuerte, tres
-  grupos claramente separados. \emph{Setosa} aislada en valores bajos;
-  \emph{Versicolor} intermedia; \emph{Virginica} en el rango alto.
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Interpretación}: la combinación de estas dos variables es la
-    mejor para clasificar especies.
-  \end{itemize}
+  \textbf{Petal.Length vs Petal.Width:} relación lineal muy fuerte, tres
+  grupos claramente separados → la mejor combinación para clasificar
+  especies.
 \end{itemize}
 
 \subsection{Correlaciones numéricas}\label{correlaciones-numuxe9ricas}
 
+Dado que no se cumple normalidad, se utilizaron correlaciones de
+Spearman. Los resultados fueron muy consistentes con Pearson (r),
+mostrando que las conclusiones son robustas:
+
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Petal.Length vs Petal.Width}: r ≈ 0.96 (correlación muy alta).
-  Variables casi redundantes, pero en conjunto definen un espacio
-  morfológico clave.\\
+  \textbf{Petal.Length vs Petal.Width:} ρ ≈ 0.96 (Spearman) / r ≈ 0.96
+  (Pearson). Correlación extremadamente alta; variables casi
+  redundantes, pero en conjunto definen un espacio morfológico clave.\\
 \item
-  \textbf{Sepal.Length vs Petal.Length}: r ≈ 0.87 (correlación fuerte).
-  A mayor sépalo, mayor pétalo, patrón general de tamaño.\\
+  \textbf{Sepal.Length vs Petal.Length:} ρ ≈ 0.87 / r ≈ 0.87. Relación
+  fuerte, ambas reflejan gradiente de tamaño.\\
 \item
-  \textbf{Sepal.Length vs Petal.Width}: r ≈ 0.82 (correlación alta).
-  También refleja el gradiente de tamaño floral.\\
+  \textbf{Sepal.Length vs Petal.Width:} ρ ≈ 0.82 / r ≈ 0.82. Correlación
+  alta, consistente con patrón de tamaño floral.\\
 \item
-  \textbf{Sepal.Width con el resto}: correlaciones bajas (r entre -0.4 y
-  0.3). Confirma que aporta poca información discriminante.
+  \textbf{Sepal.Width con el resto:} ρ entre -0.4 y 0.3 (similares a
+  Pearson). Confirma su escaso poder discriminante.
 \end{itemize}
 
-\subsection{Interpretación ecológica
-general}\label{interpretaciuxf3n-ecoluxf3gica-general}
+\subsection{Interpretación general}\label{interpretaciuxf3n-general}
 
 \begin{itemize}
-\tightlist
 \item
   Los \textbf{pétalos} son rasgos reproductivos clave: su longitud y
-  anchura diferencian a las especies porque están ligados a estrategias
-  de atracción de polinizadores.\\
+  anchura diferencian a las especies porque están ligados a la atracción
+  de polinizadores.
 \item
-  Los \textbf{sépalos}, en cambio, son más plásticos y menos
-  específicos, lo que explica su bajo poder discriminante.\\
+  Los \textbf{sépalos}, en cambio, son estructuras más plásticas y menos
+  específicas, lo que explica su bajo poder discriminante.
 \item
-  La \textbf{correlación entre variables de pétalo} refleja que ambas
+  La fuerte correlación entre variables de pétalo refleja que ambas
   describen el mismo fenómeno biológico (tamaño floral), pero su
-  combinación refuerza la clasificación.\\
-\item
-  En un contexto real de ecología vegetal, esto sugiere que la
-  diferenciación entre especies del género \emph{Iris} depende más de
-  rasgos reproductivos (pétalos) que de rasgos de soporte (sépalos).
+  combinación refuerza la clasificación.
 \end{itemize}
+
+La comparación entre Spearman y Pearson muestra que, aunque el supuesto
+de normalidad no se cumple, las correlaciones se mantienen prácticamente
+idénticas. Esto da confianza en la robustez del patrón biológico: la
+diferenciación entre especies de \emph{Iris} depende más de rasgos
+reproductivos (pétalos) que de rasgos de soporte (sépalos).
 
 \section{Distribución de variables morfométricas entre
 especies}\label{distribuciuxf3n-de-variables-morfomuxe9tricas-entre-especies}
 
-La \textbf{Figura 2} presenta diagramas de caja y bigotes que resumen la
+La \textbf{Figura 3} presenta diagramas de caja y bigotes que resumen la
 variación de las cuatro variables morfométricas en las tres especies de
 \emph{Iris}. Este análisis complementa al resumen numérico y a la matriz
 de relaciones bivariadas, ya que enfatiza tendencias centrales,
@@ -662,7 +674,7 @@ dispersión y presencia de datos atípicos.
                \AttributeTok{values\_to =} \StringTok{"Valor"}\NormalTok{)}
 
 \CommentTok{\# Gráfico unificado}
-\NormalTok{Fig2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(iris\_long, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ species, }\AttributeTok{y =}\NormalTok{ Valor, }\AttributeTok{fill =}\NormalTok{ species)) }\SpecialCharTok{+}
+\NormalTok{Fig3 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(iris\_long, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ species, }\AttributeTok{y =}\NormalTok{ Valor, }\AttributeTok{fill =}\NormalTok{ species)) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\AttributeTok{outlier.shape =} \DecValTok{21}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.7}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ Variable, }\AttributeTok{scales =} \StringTok{"free\_y"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}
@@ -676,7 +688,7 @@ dispersión y presencia de datos atípicos.
     \AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{,}
     \AttributeTok{strip.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{face =} \StringTok{"bold"}\NormalTok{)}
 \NormalTok{  )}
-\NormalTok{Fig2}
+\NormalTok{Fig3}
 \end{Highlighting}
 \end{Shaded}
 
@@ -718,20 +730,20 @@ sépalo)}\label{sepal.width-anchura-del-suxe9palo}
 \begin{itemize}
 \item
   \emph{I. setosa} tiene la mediana más alta (≈ \textbf{3.4 cm}), con
-  valores entre \textbf{2.3 y 4.4 cm}.\\
+  valores entre \textbf{2.3 y 4.4 cm}.
 \item
   \emph{I. versicolor} oscila entre \textbf{2.0 y 3.4 cm}, mediana ≈
-  \textbf{2.8 cm}.\\
+  \textbf{2.8 cm}.
 \item
   \emph{I. virginica} se ubica entre \textbf{2.2 y 3.8 cm}, mediana ≈
   \textbf{3.0 cm}.
-\item
-  Se observan varios outliers tanto en \emph{setosa} como
-  \emph{virginica,} individuos con sépalos inusualmente estrechos. Estos
-  valores atípicos podrían reflejar variación intraespecífica natural o
-  condiciones ambientales particulares. La fuerte dispersión y el
-  solapamiento reducen el valor discriminante de esta variable.
 \end{itemize}
+
+Se observan varios outliers tanto en \emph{setosa} como
+\emph{virginica,} individuos con sépalos inusualmente estrechos. Estos
+valores atípicos podrían reflejar variación intraespecífica natural o
+condiciones ambientales particulares. La fuerte dispersión y el
+solapamiento reducen el valor discriminante de esta variable.
 
 \textbf{Interpretación}: aunque setosa tiende a mayor anchura, la amplia
 dispersión y solapamiento hacen que esta variable tenga bajo poder
@@ -780,7 +792,7 @@ pétalo)}\label{petal.width-anchura-del-puxe9talo}
 variable más robusta para separar especies; su poder discriminante es
 muy alto y con solapamiento mínimo.
 
-\subsection{Interpretación general}\label{interpretaciuxf3n-general}
+\subsection{Interpretación general}\label{interpretaciuxf3n-general-1}
 
 Las variables de pétalo muestran diferencias netas entre especies, con
 cajas bien separadas. Por lo que se considera un rasgo clave para
@@ -789,10 +801,235 @@ diferencias de las variables de sépalo que presentan mayor dispersión y
 solapamiento, lo que limita su valor clasificatorio, debido a su menor
 capacidad diagnóstica, más influenciados por plasticidad ambiental.
 
-El patrón confirma que los caracteres reproductivos (pétalos) son más
-determinantes para la diferenciación interespecífica, mientras que los
-vegetativos (sépalos) presentan mayor variabilidad y menor poder
-diagnóstico.
+\section{Análisis de supuestos}\label{anuxe1lisis-de-supuestos}
+
+Se realizó una evaluación de los supuestos básicos, como normalidad,
+homocedasticidad y detección de datos atípicos.
+
+\subsection{Normalidad (univariada y
+multivariada)}\label{normalidad-univariada-y-multivariada}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Normalidad (univariada y multivariada)}
+\NormalTok{mvn\_norm }\OtherTok{\textless{}{-}} \FunctionTok{mvn}\NormalTok{(df[,}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{], }\AttributeTok{mvn\_test =} \StringTok{"hz"}\NormalTok{)}
+
+\CommentTok{\# Resultados}
+\NormalTok{mvn\_norm}\SpecialCharTok{$}\NormalTok{univariate\_normality}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+              Test     Variable Statistic p.value    Normality
+1 Anderson-Darling sepal_length     0.889   0.023 ✗ Not normal
+2 Anderson-Darling  sepal_width     0.908    0.02 ✗ Not normal
+3 Anderson-Darling petal_length     7.679  <0.001 ✗ Not normal
+4 Anderson-Darling  petal_width     5.106  <0.001 ✗ Not normal
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{mvn\_norm}\SpecialCharTok{$}\NormalTok{multivariate\_normality}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+           Test Statistic p.value     Method          MVN
+1 Henze-Zirkler     2.336  <0.001 asymptotic ✗ Not normal
+\end{verbatim}
+
+La prueba de Henze--Zirkler indicó que las variables en conjunto no
+siguen una distribución normal multivariada (\textbf{HZ = 2.336, p
+\textless{} 0.001}). A nivel univariado, el test de Anderson--Darling
+mostró que ninguna de las cuatro variables es normal:
+
+\begin{itemize}
+\item
+  \emph{Sepal.Length}: \textbf{p = 0.023}
+\item
+  \emph{Sepal.Width}: \textbf{p = 0.020}
+\item
+  \emph{Petal.Length}: \textbf{p \textless{} 0.001}
+\item
+  \emph{Petal.Width}: \textbf{p \textless{} 0.001}
+\end{itemize}
+
+\textbf{Interpretación:} El conjunto de datos no cumple con la
+suposición de normalidad, por lo que deben preferirse pruebas no
+paramétricas (ej. Kruskal-Wallis en lugar de ANOVA) y coeficientes de
+correlación de Spearman en lugar de Pearson.
+
+\subsection{Homocedasticidad}\label{homocedasticidad}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Homocedasticidad (igualdad de varianzas por especie)}
+\NormalTok{levene\_sepal\_length  }\OtherTok{\textless{}{-}} \FunctionTok{leveneTest}\NormalTok{(sepal\_length }\SpecialCharTok{\textasciitilde{}}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+\NormalTok{levene\_sepal\_width   }\OtherTok{\textless{}{-}} \FunctionTok{leveneTest}\NormalTok{(sepal\_width }\SpecialCharTok{\textasciitilde{}}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+\NormalTok{levene\_petal\_length  }\OtherTok{\textless{}{-}} \FunctionTok{leveneTest}\NormalTok{(petal\_length }\SpecialCharTok{\textasciitilde{}}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+\NormalTok{levene\_petal\_width   }\OtherTok{\textless{}{-}} \FunctionTok{leveneTest}\NormalTok{(petal\_width }\SpecialCharTok{\textasciitilde{}}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+
+\CommentTok{\# Resultados}
+\NormalTok{levene\_sepal\_length}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value   Pr(>F)   
+group   2  6.3527 0.002259 **
+      147                    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{levene\_sepal\_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value Pr(>F)
+group   2  0.5902 0.5555
+      147               
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{levene\_petal\_length }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value    Pr(>F)    
+group   2   19.48 3.129e-08 ***
+      147                      
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{levene\_petal\_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value    Pr(>F)    
+group   2  19.892 2.261e-08 ***
+      147                      
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+El test de Levene mostró resultados mixtos:
+
+\begin{itemize}
+\item
+  \emph{Sepal.Length}: \textbf{p = 0.002} → varianzas heterogéneas.
+\item
+  \emph{Sepal.Width}: \textbf{p = 0.556} → varianzas homogéneas.
+\item
+  \emph{Petal.Length}: \textbf{p \textless{} 0.001} → varianzas
+  heterogéneas.
+\item
+  \emph{Petal.Width}: \textbf{p \textless{} 0.001} → varianzas
+  heterogéneas.
+\end{itemize}
+
+\textbf{Interpretación:} Solo Sepal.Width cumple homogeneidad de
+varianzas. Las demás variables presentan heterocedasticidad, lo cual
+refuerza la necesidad de usar pruebas no paramétricas para comparar
+grupos.
+
+\subsection{Outliers multivariados}\label{outliers-multivariados}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Outliers multivariados (Mahalanobis global y robusto)}
+\NormalTok{X }\OtherTok{\textless{}{-}}\NormalTok{ df[,}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{]}
+
+\NormalTok{center\_global }\OtherTok{\textless{}{-}} \FunctionTok{colMeans}\NormalTok{(X)}
+\NormalTok{cov\_global }\OtherTok{\textless{}{-}} \FunctionTok{cov}\NormalTok{(X)}
+\NormalTok{d2\_global }\OtherTok{\textless{}{-}} \FunctionTok{mahalanobis}\NormalTok{(X, center\_global, cov\_global)}
+\NormalTok{threshold\_global }\OtherTok{\textless{}{-}} \FunctionTok{qchisq}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{df =} \FunctionTok{ncol}\NormalTok{(X))}
+
+\NormalTok{mcd }\OtherTok{\textless{}{-}} \FunctionTok{covMcd}\NormalTok{(X) }\CommentTok{\# robusto}
+\NormalTok{d2\_robust }\OtherTok{\textless{}{-}} \FunctionTok{mahalanobis}\NormalTok{(X, }\AttributeTok{center =}\NormalTok{ mcd}\SpecialCharTok{$}\NormalTok{center, }\AttributeTok{cov =}\NormalTok{ mcd}\SpecialCharTok{$}\NormalTok{cov)}
+\NormalTok{threshold\_robust }\OtherTok{\textless{}{-}} \FunctionTok{qchisq}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{df =} \FunctionTok{ncol}\NormalTok{(X))}
+
+\NormalTok{df\_out }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{d2\_global =}\NormalTok{ d2\_global,}
+    \AttributeTok{is\_out\_global =}\NormalTok{ d2\_global }\SpecialCharTok{\textgreater{}}\NormalTok{ threshold\_global,}
+    \AttributeTok{d2\_robust =}\NormalTok{ d2\_robust,}
+    \AttributeTok{is\_out\_robust =}\NormalTok{ d2\_robust }\SpecialCharTok{\textgreater{}}\NormalTok{ threshold\_robust}
+\NormalTok{  )}
+
+\FunctionTok{table}\NormalTok{(df\_out}\SpecialCharTok{$}\NormalTok{is\_out\_global)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+FALSE  TRUE 
+  144     6 
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\FunctionTok{table}\NormalTok{(df\_out}\SpecialCharTok{$}\NormalTok{is\_out\_robust)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+FALSE  TRUE 
+   95    55 
+\end{verbatim}
+
+Se evaluaron outliers multivariados con la distancia de Mahalanobis:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Mahalanobis global (media/covarianza clásica):} detectó
+  \textbf{6 observaciones atípicas} de 150 (4\%).\\
+\item
+  \textbf{Mahalanobis robusto (MCD):} detectó \textbf{55 observaciones
+  atípicas} (37\%).
+\end{itemize}
+
+\textbf{Interpretación:} El método robusto es más estricto y revela que
+una parte considerable de las observaciones no se ajusta al patrón
+multivariado esperado. Esto indica que el dataset, aunque muy usado como
+ejemplo didáctico, presenta estructuras internas de alta variabilidad
+(particularmente en Versicolor y Virginica), lo cual podría influir en
+análisis sensibles a outliers (ej. PCA, discriminante).\\
+En un reporte real, se recomienda analizar los outliers para verificar
+si corresponden a errores de medición, variabilidad biológica genuina o
+presencia de subgrupos dentro de las especies.
+
+\subsection{Interpretación general}\label{interpretaciuxf3n-general-2}
+
+Los supuestos paramétricos clásicos (normalidad y homocedasticidad) no
+se cumplen plenamente en este conjunto de datos. Por ello, se optó por:
+
+\begin{itemize}
+\item
+  Usar correlaciones de Spearman en lugar de Pearson.
+\item
+  Considerar técnicas robustas o no paramétricas en análisis
+  comparativos posteriores.
+\item
+  Los outliers no deben eliminarse automáticamente, sino interpretarse
+  en su contexto biológico/ecológico (p.~ej. plasticidad intraespecífica
+  en Iris).
+\end{itemize}
 
 
 

@@ -93,3 +93,17 @@ Fig2 <- ggplot(iris_long, aes(x = species, y = Valor, fill = species)) +
 Fig2
 
 ```
+### Normalidad (univariada y multivariada)
+
+```{r}
+#| label: supuestos
+#| fig-cap: "Evaluación de supuestos estadísticos"
+
+# Normalidad (univariada y multivariada)
+mvn_norm <- mvn(df[,1:4], mvn_test = "hz")
+
+# Resultados
+mvn_norm$univariate_normality
+mvn_norm$multivariate_normality
+```
+
