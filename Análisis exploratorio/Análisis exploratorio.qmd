@@ -34,6 +34,9 @@ library(janitor)     # Limpieza: clean_names(), tabyl()
 library(ggplot2)     # Gráficos profesionales
 library(skimr)       # EDA rápido y completo (skim())
 library(GGally)      # Matriz de gráficos para variables múltiples
+library(car)         # Homocedasticidad (Levene)
+library(MVN)         # Normalidad multivariada 
+library(robustbase)  # Detección de outliers
 library(knitr)       # Tablas en Quarto
 library(kableExtra)  # Tablas formateadas para informes
 ```
