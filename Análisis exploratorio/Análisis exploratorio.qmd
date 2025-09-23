@@ -67,6 +67,20 @@ Fig1
 ```
 
 ```{r}
+#| label: ggpairs 2
+#| fig-cap: "Matriz de dispersión y correlación de las variables cuantitativas (Spearman)."
+# Correlación no paramétrica (Spearman en ggpairs)
+Fig2 <- ggpairs(
+  df,
+  columns = 1:4,
+  mapping = aes(color = species),
+  upper = list(continuous = wrap("cor", method = "spearman", size = 3)),
+  diag = list(continuous = wrap("densityDiag", alpha = 0.6))
+)
+Fig2
+```
+
+```{r}
 #| label: caja y bigotes
 #| fig-cap: "Distribución de variables morfométricas en tres especies de Iris."
 # Pasar el dataset a formato largo
