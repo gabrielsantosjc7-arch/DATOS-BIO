@@ -107,3 +107,19 @@ mvn_norm$univariate_normality
 mvn_norm$multivariate_normality
 ```
 
+### Homocedasticidad
+
+```{r}
+# Homocedasticidad (igualdad de varianzas por especie)
+levene_sepal_length  <- leveneTest(sepal_length ~ species, data = df)
+levene_sepal_width   <- leveneTest(sepal_width ~ species, data = df)
+levene_petal_length  <- leveneTest(petal_length ~ species, data = df)
+levene_petal_width   <- leveneTest(petal_width ~ species, data = df)
+
+# Resultados
+levene_sepal_length
+levene_sepal_width
+levene_petal_length 
+levene_petal_width
+```
+
