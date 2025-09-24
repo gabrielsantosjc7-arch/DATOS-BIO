@@ -41,6 +41,20 @@ library(knitr)       # Tablas en Quarto
 library(kableExtra)  # Tablas formateadas para informes
 ```
 
+## Contexto general del proyecto
+
+El presente proyecto corresponde a un análisis exploratorio de datos morfométricos de tres especies del género *Iris* (*Iris setosa*, *Iris versicolor* e *Iris virginica*). Este conjunto de datos, ampliamente utilizado en estadística y aprendizaje automático, contiene mediciones de longitud y anchura de sépalos y pétalos en un total de 150 individuos (50 por especie).
+
+El objetivo principal del análisis es describir y comparar la variación morfológica entre especies, evaluando qué rasgos vegetativos (sépalos) y reproductivos (pétalos) permiten una mejor discriminación taxonómica.
+
+El trabajo se estructura en tres ejes:
+
+1.  **Análisis descriptivo univariado y multivariado**: resumen numérico, visualizaciones (diagramas de dispersión, histogramas, gráficos de caja) y medidas de correlación.\
+2.  **Evaluación de supuestos estadísticos**: normalidad univariada y multivariada, homocedasticidad, detección de valores atípicos. Esto permite fundamentar el uso de correlaciones paramétricas (Pearson) o no paramétricas (Spearman).\
+3.  **Interpretación ecológica de resultados**: se discute el valor discriminante de cada variable morfométrica, así como el significado biológico de los patrones encontrados.
+
+## Carga y verificación inicial de datos
+
 ```{r}
 #|label: data-load
 
@@ -55,19 +69,48 @@ tbl1<-skim(df)
 tbl1 # Resumen compacto por variable
 ```
 
+El dataset contiene **N = 150 observaciones** y **5 variables**. Cuatro son cuantitativas continuas en centímetros (*Sepal.Length, Sepal.Width, Petal.Length, Petal.Width*), y una categórica (*Species*), que clasifica en tres grupos balanceados (n = 50 por especie). No se detectaron valores faltantes ni duplicados tras la inspección inicial. Esta estructura balanceada y sin NA permite aplicar análisis univariados, comparativos y multivariados con mínimo preprocesamiento.
+
+La **Tabla 1** de estadísticos descriptivos muestra lo siguiente:
+
+-   **Sepal.Length:** media ≈ 5.84 cm, SD ≈ 0.83, rango 4.3–7.9. Variación moderada, con solapamiento esperado entre especies.
+
+-   **Sepal.Width:** media ≈ 3.06 cm, SD ≈ 0.44, rango 2.0–4.4. Es la variable más estable, aunque con ligera asimetría negativa.
+
+-   **Petal.Length:** media ≈ 3.76 cm, SD ≈ 1.77, rango 1.0–6.9. Mayor dispersión relativa, con clara separación de *setosa*.
+
+-   **Petal.Width:** media ≈ 1.20 cm, SD ≈ 0.76, rango 0.1–2.5. Alta variabilidad, con potencial de discriminación entre las tres especies.
+
+Aspectos destacados del dataset:
+
+-   **Escala homogénea de medidas:** todas las variables en centímetros → comparaciones y análisis multivariados sin necesidad de reescalado inmediato.
+
+-   **Colinealidad esperada:** Petal.Length y Petal.Width muestran alta correlación, lo que debe considerarse en regresiones o PCA.
+
+-   **Grupos biológicos claros y balanceados:** un escenario ideal para aprendizaje, aunque poco frecuente en estudios ecológicos reales.
+
+-   **Potencial de discriminación:** las variables de pétalos concentran el mayor poder de separación, coherente con su relevancia funcional en la biología reproductiva de las plantas.
+
+## Matriz de correlaciones y distribuciones entre variables numéricas
+
+Las **Figuras 1 y 2** combina tres tipos de información: distribuciones univariadas, relaciones bivariadas y correlacciones númericas.
+
 ```{r}
 #| label: ggpairs
-#| fig-cap: "Matriz de dispersión y correlación de las variables cuantitativas."
+#| fig-cap: "Matriz de dispersión y correlación de las variables cuantitativas (Pearson)."
+# Correlación paramétrica (Pearson en ggpairs)
 num_df <- df %>% select(where(is.numeric))
 Fig1<- GGally::ggpairs(
   df,
   columns = 1:4, # solo variables numéricas
   mapping = aes(color = species), # color por especie
-  upper = list(continuous = wrap("cor", size = 3)),
+  upper = list(continuous = wrap("cor", method = "pearson", size = 3)),
   diag = list(continuous = wrap("densityDiag", alpha = 0.6))
 )
 Fig1
 ```
+
+Dado que no se cumple normalidad, también se empleó el método de Spearman para estimar las correlaciones.
 
 ```{r}
 #| label: ggpairs 2
@@ -83,6 +126,70 @@ Fig2 <- ggpairs(
 Fig2
 ```
 
+### Distribuciones univariadas
+
+-   **Sepal.Length:**
+
+    -   *Setosa* concentrada en valores bajos (4.3–5.8 cm), muy homogénea.\
+    -   *Versicolor* rango intermedio (≈ 4.9–7.0 cm).\
+    -   *Virginica* valores altos (≈ 4.9–7.9 cm), con ligera superposición con Versicolor.
+
+    **Interpretación:** útil para separar Setosa, pero Versicolor y Virginica se solapan.
+
+-   **Sepal.Width:**
+
+    -   Distribución amplia en todas las especies.\
+    -   *Setosa* tiende a valores promedio mayores, pero con solapamiento considerable.
+
+    **Interpretación:** bajo poder discriminante, refleja variabilidad natural.
+
+-   **Petal.Length:**
+
+    -   *Setosa* muy bajos (≈ 1.0–1.9 cm), sin solapamiento con otras especies.\
+    -   *Versicolor* rango medio (≈ 3.0–5.1 cm).\
+    -   *Virginica* altos (≈ 4.5–6.9 cm).
+
+    **Interpretación:** variable clave, separa Setosa y discrimina relativamente bien Versicolor vs Virginica.
+
+-   **Petal.Width:**
+
+    -   *Setosa* muy bajos (≈ 0.1–0.6 cm).\
+    -   *Versicolor* rango medio (≈ 1.0–1.8 cm).\
+    -   *Virginica* altos (≈ 1.4–2.5 cm).
+
+    **Interpretación:** la más robusta para separar las tres especies, casi sin solapamiento.
+
+### Relaciones bivariadas
+
+-   **Sepal.Length vs Sepal.Width:** nubes muy mezcladas → baja capacidad de discriminación.\
+-   **Sepal.Length vs Petal.Length:** relación positiva moderada; Setosa queda aislada por pétalos cortos.\
+-   **Sepal.Length vs Petal.Width:** tendencia positiva clara; ayuda a diferenciar más que Sepal.Length solo, aunque con solapamientos.\
+-   **Sepal.Width vs Petal.Length / Petal.Width:** relaciones débiles, confirman poco valor discriminante del sépalo.\
+-   **Petal.Length vs Petal.Width:** relación lineal muy fuerte, tres grupos claramente separados → la mejor combinación para clasificar especies.
+
+### Correlaciones numéricas
+
+Dado que no se cumple normalidad, se utilizaron correlaciones de Spearman. Los resultados fueron muy consistentes con Pearson, mostrando que las conclusiones son robustas:
+
+-   **Petal.Length vs Petal.Width:** ρ ≈ 0.93 (Spearman) / r ≈ 0.96 (Pearson). Correlación extremadamente alta; variables casi redundantes, pero en conjunto definen un espacio morfológico clave.\
+-   **Sepal.Length vs Petal.Length:** ρ ≈ 0.88 / r ≈ 0.87. Relación fuerte, ambas reflejan gradiente de tamaño.\
+-   **Sepal.Length vs Petal.Width:** ρ ≈ 0.83 / r ≈ 0.82. Correlación alta, consistente con patrón de tamaño floral.\
+-   **Sepal.Width con el resto:** ρ entre -0.1 y -0.3 (similares a Pearson). Confirma su escaso poder discriminante.
+
+### Interpretación general
+
+-   Los **pétalos** son rasgos reproductivos clave: su longitud y anchura diferencian a las especies porque están ligados a la atracción de polinizadores.
+
+-   Los **sépalos**, en cambio, son estructuras más plásticas y menos específicas, lo que explica su bajo poder discriminante.
+
+-   La fuerte correlación entre variables de pétalo refleja que ambas describen el mismo fenómeno biológico (tamaño floral), pero su combinación refuerza la clasificación.
+
+La comparación entre Spearman y Pearson muestra que, aunque el supuesto de normalidad no se cumple, las correlaciones se mantienen prácticamente idénticas. Esto da confianza en la robustez del patrón biológico: la diferenciación entre especies de *Iris* depende más de rasgos reproductivos (pétalos) que de rasgos de soporte (sépalos).
+
+## Distribución de variables morfométricas entre especies
+
+La **Figura 3** presenta diagramas de caja y bigotes que resumen la variación de las cuatro variables morfométricas en las tres especies de *Iris*. Este análisis complementa al resumen numérico y a la matriz de relaciones bivariadas, ya que enfatiza tendencias centrales, dispersión y presencia de datos atípicos.
+
 ```{r}
 #| label: caja y bigotes
 #| fig-cap: "Distribución de variables morfométricas en tres especies de Iris."
@@ -93,7 +200,7 @@ iris_long <- df %>%
                values_to = "Valor")
 
 # Gráfico unificado
-Fig2 <- ggplot(iris_long, aes(x = species, y = Valor, fill = species)) +
+Fig3 <- ggplot(iris_long, aes(x = species, y = Valor, fill = species)) +
   geom_boxplot(outlier.shape = 21, alpha = 0.7) +
   facet_wrap(~ Variable, scales = "free_y") +
   labs(
@@ -107,9 +214,54 @@ Fig2 <- ggplot(iris_long, aes(x = species, y = Valor, fill = species)) +
     legend.position = "none",
     strip.text = element_text(face = "bold")
   )
-Fig2
+Fig3
 
 ```
+
+### Sepal.Length (longitud del sépalo)
+
+-   *I. setosa* muestra valores concentrados entre **4.3 y 5.8 cm**, con una mediana cercana a **5.0 cm**. La caja es compacta, indicando baja variabilidad.\
+-   *I. versicolor* se distribuye entre **4.9 y 7.0 cm**, con mediana ≈ **5.9 cm**, rango intermedio.\
+-   *I. virginica* alcanza los valores más altos (**4.9–7.9 cm**), con mediana ≈ **6.5 cm**.
+
+**Interpretación**: hay cierto solapamiento entre *versicolor* y *virginica*. Útil para distinguir a *setosa*, pero no para discriminar con precisión entre *versicolor* y *virginica*.
+
+### Sepal.Width (anchura del sépalo)
+
+-   *I. setosa* tiene la mediana más alta (≈ **3.4 cm**), con valores entre **2.3 y 4.4 cm**.
+
+-   *I. versicolor* oscila entre **2.0 y 3.4 cm**, mediana ≈ **2.8 cm**.
+
+-   *I. virginica* se ubica entre **2.2 y 3.8 cm**, mediana ≈ **3.0 cm**.
+
+Se observan varios outliers tanto en *setosa* como *virginica,* individuos con sépalos inusualmente estrechos. Estos valores atípicos podrían reflejar variación intraespecífica natural o condiciones ambientales particulares. La fuerte dispersión y el solapamiento reducen el valor discriminante de esta variable.
+
+**Interpretación**: aunque setosa tiende a mayor anchura, la amplia dispersión y solapamiento hacen que esta variable tenga bajo poder discriminante.
+
+### Petal.Length (longitud del pétalo)
+
+-   *I. setosa* presenta valores muy bajos (**1.0–1.9 cm**) con mediana ≈ **1.5 cm**.\
+-   *I. versicolor* ocupa un rango intermedio (**3.0–5.1 cm**), con mediana ≈ **4.3 cm**.\
+-   *I. virginica* concentra los valores más altos (**4.5–6.9 cm**), mediana ≈ **5.5 cm**.
+
+**Interpretación**: el solapamiento entre *versicolor* y *virginica* es reducido y se da en los límites superiores/inferiores de sus cajas. Esta variable es altamente informativa; separa completamente a *setosa* y discrimina en gran medida a *versicolor* y *virginica*.
+
+### Petal.Width (anchura del pétalo)
+
+-   *I. setosa* tiene los valores más bajos (**0.1–0.6 cm**), con mediana ≈ **0.2 cm**, sin solapamiento con las otras especies.\
+-   *I. versicolor* se concentra entre **1.0 y 1.8 cm**, mediana ≈ **1.3 cm**.\
+-   *I. virginica* presenta los valores más altos (**1.4–2.5 cm**), mediana ≈ **2.0 cm**.
+
+**Interpretación**: junto con *Petal.Length*, constituye la variable más robusta para separar especies; su poder discriminante es muy alto y con solapamiento mínimo.
+
+### Interpretación general
+
+Las variables de pétalo muestran diferencias netas entre especies, con cajas bien separadas. Por lo que se considera un rasgo clave para clasificación, debido a su alta capacidad de separar grupos. A diferencias de las variables de sépalo que presentan mayor dispersión y solapamiento, lo que limita su valor clasificatorio, debido a su menor capacidad diagnóstica, más influenciados por plasticidad ambiental.
+
+## Análisis de supuestos
+
+Se realizó una evaluación de los supuestos básicos, como normalidad, homocedasticidad y detección de datos atípicos.
+
 ### Normalidad (univariada y multivariada)
 
 ```{r}
@@ -123,6 +275,18 @@ mvn_norm <- mvn(df[,1:4], mvn_test = "hz")
 mvn_norm$univariate_normality
 mvn_norm$multivariate_normality
 ```
+
+La prueba de Henze–Zirkler indicó que las variables en conjunto no siguen una distribución normal multivariada (**HZ = 2.336, p \< 0.001**). A nivel univariado, el test de Anderson–Darling mostró que ninguna de las cuatro variables es normal:
+
+-   *Sepal.Length*: **p = 0.023**
+
+-   *Sepal.Width*: **p = 0.020**
+
+-   *Petal.Length*: **p \< 0.001**
+
+-   *Petal.Width*: **p \< 0.001**
+
+**Interpretación:** El conjunto de datos no cumple con la suposición de normalidad, por lo que deben preferirse pruebas no paramétricas (ej. Kruskal-Wallis en lugar de ANOVA) y coeficientes de correlación de Spearman en lugar de Pearson.
 
 ### Homocedasticidad
 
@@ -139,6 +303,18 @@ levene_sepal_width
 levene_petal_length 
 levene_petal_width
 ```
+
+El test de Levene mostró resultados mixtos:
+
+-   *Sepal.Length*: **p = 0.002** → varianzas heterogéneas.
+
+-   *Sepal.Width*: **p = 0.556** → varianzas homogéneas.
+
+-   *Petal.Length*: **p \< 0.001** → varianzas heterogéneas.
+
+-   *Petal.Width*: **p \< 0.001** → varianzas heterogéneas.
+
+**Interpretación:** Solo Sepal.Width cumple homogeneidad de varianzas. Las demás variables presentan heterocedasticidad, lo cual refuerza la necesidad de usar pruebas no paramétricas para comparar grupos.
 
 ### Outliers multivariados
 
@@ -166,3 +342,23 @@ df_out <- df %>%
 
 table(df_out$is_out_global)
 table(df_out$is_out_robust)
+
+```
+
+Se evaluaron outliers multivariados con la distancia de Mahalanobis:
+
+-   **Mahalanobis global (media/covarianza clásica):** detectó **6 observaciones atípicas** de 150 (4%).\
+-   **Mahalanobis robusto (MCD):** detectó **55 observaciones atípicas** (37%).
+
+**Interpretación:** El método robusto es más estricto y revela que una parte considerable de las observaciones no se ajusta al patrón multivariado esperado. Esto indica que el dataset, aunque muy usado como ejemplo didáctico, presenta estructuras internas de alta variabilidad (particularmente en Versicolor y Virginica), lo cual podría influir en análisis sensibles a outliers (ej. PCA, discriminante).\
+En un reporte real, se recomienda analizar los outliers para verificar si corresponden a errores de medición, variabilidad biológica genuina o presencia de subgrupos dentro de las especies.
+
+### Interpretación general
+
+Los supuestos paramétricos clásicos (normalidad y homocedasticidad) no se cumplen plenamente en este conjunto de datos. Por ello, se optó por:
+
+-   Usar correlaciones de Spearman en lugar de Pearson.
+
+-   Considerar técnicas robustas o no paramétricas en análisis comparativos posteriores.
+
+-   Los outliers no deben eliminarse automáticamente, sino interpretarse en su contexto biológico/ecológico (p. ej. plasticidad intraespecífica en Iris).
