@@ -1,0 +1,24 @@
+## Limpieza y revisión inicial de los datos
+
+```{r}
+#|label: prep
+#Librerías
+library(tidyverse)
+library(janitor)
+library(skimr)
+library(palmerpenguins)
+
+df_raw <- penguins %>% as_tibble() # guardo raw para auditoría
+```
+
+```{r}
+#|label: clean_names
+df <- df_raw %>% clean_names()
+names(df) # comprobar
+```
+
+```{r}
+#|label: skim
+skim(df) #Resumen rápido (estructura + NA)
+```
+
