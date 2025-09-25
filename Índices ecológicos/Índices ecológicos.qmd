@@ -80,3 +80,31 @@ df %>%
    )
 
 ```
+```{r}
+#|label: Manejo de los NA
+
+# Manejo de los NA
+df <- df %>%
+  mutate(
+    n_na_numeric = rowSums(is.na(select(., bill_length_mm, bill_depth_mm,
+                                        flipper_length_mm, body_mass_g)))
+  )
+
+df <- df %>%
+  mutate(
+    sex = case_when(
+      is.na(sex) & n_na_numeric <= 1 ~ "Unknown",  # casi toda la info presente
+      TRUE ~ as.character(sex)                    # dejar como está
+    )
+  )
+
+df <- df %>%
+  filter(!(is.na(bill_length_mm) &
+           is.na(bill_depth_mm) &
+           is.na(flipper_length_mm) &
+           is.na(body_mass_g)))
+
+
+df <- df %>% select(-n_na_numeric) #Eliminar columnas innecesarias
+```
+
