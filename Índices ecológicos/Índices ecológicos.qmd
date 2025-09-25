@@ -22,3 +22,15 @@ names(df) # comprobar
 skim(df) #Resumen rápido (estructura + NA)
 ```
 
+```{r}
+#|label: duplicates
+n_dup <- sum(duplicated(df))
+n_dup # Número de filas duplicadas
+
+# si quieres, ver filas duplicadas (opcional)
+df %>% filter(duplicated(.)) %>% head()
+
+# eliminar duplicados exactos (opcional)
+df <- df %>% distinct()
+
+```
