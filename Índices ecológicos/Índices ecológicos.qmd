@@ -57,3 +57,26 @@ unique(df$sex)
 
 df1 <- df %>% select(-year) #Eliminar columnas innecesarias
 ```
+```{r}
+#| label: ranges_boxplot variables númericas
+#| fig-cap: "Rangos y valores extremos de variables morfométricas."
+
+# Boxplots rápidos para ver rangos y "outliers" visuales
+key_vars <- c("bill_length_mm","bill_depth_mm","flipper_length_mm","body_mass_g")
+
+df %>%
+  select(all_of(key_vars)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x = variable, y = value)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(title = "Boxplots rápidos: rangos y valores extremos",
+       x = "", y = "Valor") +
+  theme_minimal(base_size = 13) +
+  theme(
+   plot.title = element_text(hjust = 0.5, face = "bold"),
+   legend.position = "none",
+   strip.text = element_text(face = "bold")
+   )
+
+```
