@@ -34,3 +34,26 @@ df %>% filter(duplicated(.)) %>% head()
 df <- df %>% distinct()
 
 ```
+```{r}
+#| label: consistencia de variables categóricas
+
+#Variables categóricas
+df %>% summarise(across(where(is.character), n_distinct))
+df %>% summarise(across(where(is.factor), n_distinct))
+df %>% count(species)
+df %>% count(island)
+df %>% count(sex)
+
+#Tipos de variables (convertir a factor si hace falta)
+df <- df %>% 
+  mutate(species = as.factor(species),
+         island  = as.factor(island),
+         sex     = as.factor(sex))
+
+#Revisar posibles inconsistencias de texto
+unique(df$species)
+unique(df$island)
+unique(df$sex)
+
+df1 <- df %>% select(-year) #Eliminar columnas innecesarias
+```
