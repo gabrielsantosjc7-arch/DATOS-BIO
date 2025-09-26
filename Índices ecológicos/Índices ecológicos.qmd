@@ -133,3 +133,50 @@ abund %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", 
       "hover", "condensed"))
 
+
+```{r}
+#Librerías
+library(vegan)
+
+```
+
+```{r}
+#| label: indices
+#| tbl-cap: "Índices de diversidad por isla (Riqueza, Shannon, Simpson, Equidad de Pielou)."
+
+# Preparar matriz numérica (filas = islas, columnas = especies)
+mat <- abund %>% select(-island) %>% as.matrix()
+rownames(mat) <- abund$island
+
+# Cálculo de índices
+shannon  <- diversity(mat, index = "shannon")          # H'
+simpson  <- diversity(mat, index = "simpson")          # D (Simpson)
+richness <- specnumber(mat)                            # S
+# Equidad (Pielou) -> si S <= 1, definimos equidad = 0 para evitar NaN
+evenness_raw <- ifelse(richness > 1, shannon / log(richness), 0)
+
+indices <- tibble(
+  Isla    = rownames(mat),
+  Riqueza = richness,
+  Shannon = round(shannon, 2),
+  Simpson = round(simpson, 2),
+  Equidad = round(evenness_raw, 2)
+)
+
+# Imprimir tabla
+indices %>%
+  kable(align = "lcccc") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped",
+      "hover","condensed"))
+```{r}
+#| label: figura-rarefaccion
+#| fig-cap: "Curvas de rarefacción de riqueza de especies por isla."
+
+# Dibujar rarefacción
+cols <- c("darkblue","darkgreen","darkred")
+rarecurve(mat, step = 10, sample = min(rowSums(mat)), col = cols, label = TRUE, 
+          lwd = 2, ylab = "Riqueza de especies")
+legend("bottomright", legend = rownames(mat), col = cols, lwd = 2, bty = "n")
+
+
+```

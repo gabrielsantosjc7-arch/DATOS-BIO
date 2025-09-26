@@ -705,6 +705,13 @@ Se contabilizó cuántas mediciones morfométricas tiene cada registro
 \section{Construcción de la matriz de
 abundancia}\label{construcciuxf3n-de-la-matriz-de-abundancia}
 
+Aunque \texttt{palmerpenguins} no es un dataset clásico de abundancias
+de especies (es más bien morfométrico), podemos adaptarlo, para ello
+tomamos las especies como categorías biológicas (3 especies:
+\emph{Adelie}, \emph{Gentoo}, \emph{Chinstrap}) y contamos número de
+individuos por especie y por isla, para tener una matriz de abundancias
+que nos permita calcular índices de biodiversidad.
+
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\#Librerías}
@@ -743,13 +750,6 @@ Torgersen & 51 & 0 & 0\\
 \bottomrule
 \end{longtable}
 
-Aunque \texttt{palmerpenguins} no es un dataset clásico de abundancias
-de especies (es más bien morfométrico), podemos adaptarlo, para ello
-tomamos las especies como categorías biológicas (3 especies:
-\emph{Adelie}, \emph{Gentoo}, \emph{Chinstrap}) y contamos número de
-individuos por especie y por isla, para tener una matriz de abundancias
-que nos permita calcular índices de biodiversidad.
-
 En la \textbf{Tabla 4} se muestra la distribución de individuos por
 especie e isla:
 
@@ -776,6 +776,35 @@ Torgersen resulta la más restringida, con presencia exclusiva de
 \section{Calcular índices de diversidad y curvas de
 rarefacción}\label{calcular-uxedndices-de-diversidad-y-curvas-de-rarefacciuxf3n}
 
+\begin{itemize}
+\item
+  \textbf{Riqueza (S):} número de especies observadas. Valores enteros
+  (1, 2,\ldots).
+\item
+  \textbf{Shannon (H')}: mide diversidad considerando riqueza y
+  abundancia relativa. Valores cercanos a 0 indican baja diversidad
+  (monoespecífico). Valores mayores indican mayor complejidad.
+\item
+  \textbf{Simpson (D)}: en la salida de
+  \texttt{vegan::diversity(...,\ "simpson")} se obtiene D (probabilidad
+  de que dos individuos sean distintos). Valores mayores → más
+  diversidad efectiva.
+\item
+  \textbf{Equidad de Pielou (J')}: H' / ln(S). Rango 0--1. J' ≈ 1 indica
+  que las especies están en proporciones muy similares (alta equidad).
+  J' bajo indica dominancia de una especie. Para S = 1 definimos J' = 0
+  (no aplicable).
+\item
+  \textbf{Curvas de rarefacción}: Las curvas de rarefacción muestran
+  cómo aumenta la riqueza observada (n° especies) con el número de
+  individuos muestreados. Permiten comparar riqueza entre lugares con
+  distinto esfuerzo muestral, estandarizando por número de individuos.
+  Si una curva se estabiliza (nivelación) significa que el muestreo fue
+  suficiente para capturar la riqueza local. Si una curva sigue subiendo
+  a mayor número de individuos, indica que con más muestreo
+  probablemente se observarían más especies.
+\end{itemize}
+
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\#Librerías}
@@ -785,66 +814,126 @@ rarefacción}\label{calcular-uxedndices-de-diversidad-y-curvas-de-rarefacciuxf3n
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
-\CommentTok{\# Matriz especie x isla}
+\CommentTok{\# Preparar matriz numérica (filas = islas, columnas = especies)}
 \NormalTok{mat }\OtherTok{\textless{}{-}}\NormalTok{ abund }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{island) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as.matrix}\NormalTok{()}
 \FunctionTok{rownames}\NormalTok{(mat) }\OtherTok{\textless{}{-}}\NormalTok{ abund}\SpecialCharTok{$}\NormalTok{island}
 
-\CommentTok{\# índices}
-\NormalTok{shannon  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"shannon"}\NormalTok{)}
-\NormalTok{simpson  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"simpson"}\NormalTok{)}
-\NormalTok{richness }\OtherTok{\textless{}{-}} \FunctionTok{specnumber}\NormalTok{(mat)}
-\NormalTok{evenness }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(richness }\SpecialCharTok{\textgreater{}} \DecValTok{1}\NormalTok{, shannon }\SpecialCharTok{/} \FunctionTok{log}\NormalTok{(richness), }\DecValTok{0}\NormalTok{) }\CommentTok{\# corregido}
+\CommentTok{\# Cálculo de índices}
+\NormalTok{shannon  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"shannon"}\NormalTok{)          }\CommentTok{\# H\textquotesingle{}}
+\NormalTok{simpson  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"simpson"}\NormalTok{)          }\CommentTok{\# D (Simpson)}
+\NormalTok{richness }\OtherTok{\textless{}{-}} \FunctionTok{specnumber}\NormalTok{(mat)                            }\CommentTok{\# S}
+\CommentTok{\# Equidad (Pielou) {-}\textgreater{} si S \textless{}= 1, definimos equidad = 0 para evitar NaN}
+\NormalTok{evenness\_raw }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(richness }\SpecialCharTok{\textgreater{}} \DecValTok{1}\NormalTok{, shannon }\SpecialCharTok{/} \FunctionTok{log}\NormalTok{(richness), }\DecValTok{0}\NormalTok{)}
 
-\NormalTok{indices }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
-  \AttributeTok{Isla     =} \FunctionTok{rownames}\NormalTok{(mat),}
-  \AttributeTok{Riqueza  =}\NormalTok{ richness,}
-  \AttributeTok{Shannon  =} \FunctionTok{round}\NormalTok{(shannon, }\DecValTok{2}\NormalTok{),}
-  \AttributeTok{Simpson  =} \FunctionTok{round}\NormalTok{(simpson, }\DecValTok{2}\NormalTok{),}
-  \AttributeTok{Equidad  =} \FunctionTok{round}\NormalTok{(evenness, }\DecValTok{2}\NormalTok{)}
+\NormalTok{indices }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{Isla    =} \FunctionTok{rownames}\NormalTok{(mat),}
+  \AttributeTok{Riqueza =}\NormalTok{ richness,}
+  \AttributeTok{Shannon =} \FunctionTok{round}\NormalTok{(shannon, }\DecValTok{2}\NormalTok{),}
+  \AttributeTok{Simpson =} \FunctionTok{round}\NormalTok{(simpson, }\DecValTok{2}\NormalTok{),}
+  \AttributeTok{Equidad =} \FunctionTok{round}\NormalTok{(evenness\_raw, }\DecValTok{2}\NormalTok{)}
 \NormalTok{)}
 
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(indices, }\AttributeTok{caption =} \ConstantTok{NULL}\NormalTok{)}
+\CommentTok{\# Imprimir tabla}
+\NormalTok{indices }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{align =} \StringTok{"lcccc"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{bootstrap\_options =} \FunctionTok{c}\NormalTok{(}\StringTok{"striped"}\NormalTok{,}
+      \StringTok{"hover"}\NormalTok{,}\StringTok{"condensed"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{longtable}[]{@{}llrrrr@{}}
-\caption{Índices de diversidad de especies de pingüinos por
-isla.}\tabularnewline
-\toprule\noalign{}
-& Isla & Riqueza & Shannon & Simpson & Equidad \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-& Isla & Riqueza & Shannon & Simpson & Equidad \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Biscoe & Biscoe & 2 & 0.58 & 0.39 & 0.83 \\
-Dream & Dream & 2 & 0.69 & 0.50 & 0.99 \\
-Torgersen & Torgersen & 1 & 0.00 & 0.00 & 0.00 \\
+\begin{longtable}[t]{lcccc}
+\caption{Índices de diversidad por isla (Riqueza, Shannon, Simpson, Equidad de
+Pielou).}\tabularnewline
+
+\toprule
+Isla & Riqueza & Shannon & Simpson & Equidad\\
+\midrule
+Biscoe & 2 & 0.58 & 0.39 & 0.83\\
+Dream & 2 & 0.69 & 0.50 & 0.99\\
+Torgersen & 1 & 0.00 & 0.00 & 0.00\\
+\bottomrule
 \end{longtable}
+
+En la \textbf{Tabla 5} se presentan los resultados obtenidos en los
+análisis de los índices de diversidad:
+
+\begin{itemize}
+\item
+  \textbf{Biscoe (Riqueza = 2; H' = 0.58; S= 0.39; J' = 0.83):}
+  diversidad moderada pero desequilibrada, ya que aunque tiene 2
+  especies , la abundancia está claramente dominada por \emph{Gentoo}
+  (123 individuos frente a 44 de \emph{Adelie}).\\
+\item
+  \textbf{Dream (Riqueza = 2; H' = 0.69; S= 0.50; J' = 0.99):} mayor
+  diversidad efectiva y casi máxima equidad. Biológicamente, sugiere
+  condiciones que permiten coexistencia equilibrada. Presenta dos
+  especies con abundancias similares (\emph{Adelie} 56, \emph{Chinstrap}
+  68).\\
+\item
+  \textbf{Torgersen (Riqueza = 1; H' = 0; S= 0; J' = 0):} comunidad
+  monoespecífica y baja complejidad de la comunidad local. Solo
+  \emph{Adelie} registrada (51 individuos).
+\end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
-\CommentTok{\# Curvas de rarefacción}
-\FunctionTok{rarecurve}\NormalTok{(mat, }\AttributeTok{step =} \DecValTok{10}\NormalTok{, }\AttributeTok{sample =} \FunctionTok{min}\NormalTok{(}\FunctionTok{rowSums}\NormalTok{(mat)), }\AttributeTok{col =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{, }
+\CommentTok{\# Dibujar rarefacción}
+\NormalTok{cols }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"darkblue"}\NormalTok{,}\StringTok{"darkgreen"}\NormalTok{,}\StringTok{"darkred"}\NormalTok{)}
+\FunctionTok{rarecurve}\NormalTok{(mat, }\AttributeTok{step =} \DecValTok{10}\NormalTok{, }\AttributeTok{sample =} \FunctionTok{min}\NormalTok{(}\FunctionTok{rowSums}\NormalTok{(mat)), }\AttributeTok{col =}\NormalTok{ cols, }\AttributeTok{label =} \ConstantTok{TRUE}\NormalTok{, }
           \AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Riqueza de especies"}\NormalTok{)}
-\FunctionTok{legend}\NormalTok{(}\StringTok{"bottomright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{rownames}\NormalTok{(mat), }\AttributeTok{col =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{, }
-       \AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{bty =} \StringTok{"n"}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"bottomright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{rownames}\NormalTok{(mat), }\AttributeTok{col =}\NormalTok{ cols, }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{bty =} \StringTok{"n"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \pandocbounded{\includegraphics[keepaspectratio]{Índices-ecológicos_files/figure-pdf/rarefaccion-1.pdf}}
+{\centering \pandocbounded{\includegraphics[keepaspectratio]{Índices-ecológicos_files/figure-pdf/figura-rarefaccion-1.pdf}}
 
 }
 
-\caption{Curvas de rarefacción de riqueza de especies de pingüinos por
-isla.}
+\caption{Curvas de rarefacción de riqueza de especies por isla.}
 
 \end{figure}%
+
+En la \textbf{Figura 2} se presentan los resultados obtenidos en los
+análisis de las curvas de rarefacción de riqueza:
+
+\begin{itemize}
+\item
+  Dream y Biscoe alcanzan un máximo de 2 especies en la curva; sus
+  curvas se estabilizan, sugiriendo que el muestreo capturó la riqueza
+  efectiva.
+\item
+  Torgersen se estabiliza rápidamente en 1 especie, confirmando su
+  carácter monoespecífico.
+\item
+  Aun cuando Biscoe tiene más individuos totales , su riqueza no supera
+  a Dream; la rarefacción muestra que la mayor abundancia no implica
+  mayor riqueza.
+\end{itemize}
+
+\section{\texorpdfstring{\textbf{Conclusiones
+generales}}{Conclusiones generales}}\label{conclusiones-generales}
+
+\begin{itemize}
+\item
+  Riqueza por isla es baja (1--2 especies), pero la distribución de
+  abundancias (equidad) diferencia fuertemente la estructura
+  comunitaria.
+\item
+  Dream es la isla con mayor diversidad efectiva (H' = 0.69; J' = 0.99),
+  por la coexistencia equilibrada de \emph{Adelie} y \emph{Chinstrap}.
+\item
+  Biscoe tiene mayor número de individuos pero menor equidad por la
+  dominancia de \emph{Gentoo}, resultando en H' más bajo.
+\item
+  Torgersen es monoespecífica (solo \emph{Adelie}) y muestra diversidad
+  mínima.
+\item
+  Las curvas de rarefacción confirman que el muestreo capturó la riqueza
+  observable en cada isla (curvas estabilizadas) y permiten comparar
+  riqueza independientemente del tamaño muestral.
+\end{itemize}
 
 
 
