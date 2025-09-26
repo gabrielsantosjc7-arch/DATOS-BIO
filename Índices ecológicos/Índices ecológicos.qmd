@@ -108,3 +108,28 @@ df <- df %>%
 df <- df %>% select(-n_na_numeric) #Eliminar columnas innecesarias
 ```
 
+## Construcción de la matriz de abundancia
+
+```{r}
+#Librerías
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+#| label: abundancia
+
+# Matriz especie x isla
+abund <- df %>%
+  count(island, species) %>%
+  pivot_wider(names_from = species, values_from = n, values_fill = 0)
+
+# Crear tabla
+abund %>%
+  kable(caption = "Abundancia de pingüinos por especie e isla 
+        en el archipiélago Palmer.",
+        align = "lccc",
+        col.names = c("Isla", "Adelie", "Gentoo", "Chinstrap")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", 
+      "hover", "condensed"))
+

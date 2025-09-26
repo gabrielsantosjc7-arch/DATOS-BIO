@@ -162,6 +162,20 @@
  
 
 
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \KOMAoption{captions}{tableheading}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
@@ -238,24 +252,9 @@ El presente documento guía describe el dataset palmerpenguins
 (mediciones morfométricas y metadatos de tres especies de pingüinos:
 \emph{Adelie}, \emph{Chinstrap} y \emph{Gentoo}). Antes de calcular
 índices ecológicos o métricas de biodiversidad, es fundamental evaluar
-la calidad y consistencia de los datos. Para ello se realizarán los
-siguientes pasos:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  Auditar rápidamente la base (nombres, estructura, NA, duplicados,
-  categorías).
-\item
-  Tomar decisiones prácticas y reproducibles sobre NA y duplicados
-  (eliminar, imputar o marcar).
-\item
-  Marcar y documentar outliers sin eliminarlos automáticamente; preparar
-  la tabla limpia para análisis ecológicos.
-\item
-  Generar una matriz de abundancias / comunidad mínima (p.~ej. conteos
-  por isla × especie) para calcular índices y rarefacción.
-\end{enumerate}
+la calidad y consistencia de los datos. Para ello se realizará la
+limpieza y revisión inicial de los datos (nombres, estructura, NA,
+duplicados, categorías).
 
 \section{Limpieza y revisión inicial de los
 datos}\label{limpieza-y-revisiuxf3n-inicial-de-los-datos}
@@ -398,11 +397,11 @@ year & 0 & 1.00 & 2008.03 & 0.82 & 2007.0 & 2007.00 & 2008.00 & 2009.0 &
 2009.0 & ▇▁▇▁▇ \\
 \end{longtable}
 
-La base de datos \texttt{penguins} contiene 344 registros y 8 variables,
-de las cuales 3 son categóricas (\texttt{species}, \texttt{island},
-\texttt{sex}) y 5 numéricas (\texttt{bill\_length\_mm},
-\texttt{bill\_depth\_mm}, \texttt{flipper\_length\_mm},
-\texttt{body\_mass\_g}, \texttt{year}).
+De acuerdo con la \textbf{Tabla 1}, la base de datos \texttt{penguins}
+contiene 344 registros y 8 variables, de las cuales 3 son categóricas
+(\texttt{species}, \texttt{island}, \texttt{sex}) y 5 numéricas
+(\texttt{bill\_length\_mm}, \texttt{bill\_depth\_mm},
+\texttt{flipper\_length\_mm}, \texttt{body\_mass\_g}, \texttt{year}).
 
 En las variables categóricas:
 
@@ -623,7 +622,8 @@ utilizada en los análisis posteriores.
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\# Boxplots rápidos para ver rangos y "outliers" visuales}
-\NormalTok{key\_vars }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"bill\_length\_mm"}\NormalTok{,}\StringTok{"bill\_depth\_mm"}\NormalTok{,}\StringTok{"flipper\_length\_mm"}\NormalTok{,}\StringTok{"body\_mass\_g"}\NormalTok{)}
+\NormalTok{key\_vars }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"bill\_length\_mm"}\NormalTok{,}\StringTok{"bill\_depth\_mm"}\NormalTok{,}\StringTok{"flipper\_length\_mm"}\NormalTok{,}
+              \StringTok{"body\_mass\_g"}\NormalTok{)}
 
 \NormalTok{df }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{select}\NormalTok{(}\FunctionTok{all\_of}\NormalTok{(key\_vars)) }\SpecialCharTok{\%\textgreater{}\%}
@@ -652,10 +652,10 @@ utilizada en los análisis posteriores.
 
 \end{figure}%
 
-Los rangos numéricos se encuentran dentro de lo esperado para las
-especies registradas, y los gráficos de caja confirman que los valores
-extremos corresponden a variabilidad natural más que a errores de
-registro.
+En la \textbf{Figura 1}, se observa que los rangos numéricos se
+encuentran dentro de lo esperado para las especies registradas, y los
+gráficos de caja confirman que los valores extremos corresponden a
+variabilidad natural más que a errores de registro.
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -701,6 +701,150 @@ Se contabilizó cuántas mediciones morfométricas tiene cada registro
   mediciones) fueron eliminados, ya que no aportan datos morfométricos
   para los análisis previstos.
 \end{itemize}
+
+\section{Construcción de la matriz de
+abundancia}\label{construcciuxf3n-de-la-matriz-de-abundancia}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\#Librerías}
+\FunctionTok{library}\NormalTok{(knitr)}
+\FunctionTok{library}\NormalTok{(kableExtra)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Matriz especie x isla}
+\NormalTok{abund }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{count}\NormalTok{(island, species) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ species, }\AttributeTok{values\_from =}\NormalTok{ n, }\AttributeTok{values\_fill =} \DecValTok{0}\NormalTok{)}
+
+\CommentTok{\# Crear tabla}
+\NormalTok{abund }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Abundancia de pingüinos por especie e isla }
+\StringTok{        en el archipiélago Palmer."}\NormalTok{,}
+        \AttributeTok{align =} \StringTok{"lccc"}\NormalTok{,}
+        \AttributeTok{col.names =} \FunctionTok{c}\NormalTok{(}\StringTok{"Isla"}\NormalTok{, }\StringTok{"Adelie"}\NormalTok{, }\StringTok{"Gentoo"}\NormalTok{, }\StringTok{"Chinstrap"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{bootstrap\_options =} \FunctionTok{c}\NormalTok{(}\StringTok{"striped"}\NormalTok{, }
+      \StringTok{"hover"}\NormalTok{, }\StringTok{"condensed"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lccc}
+\caption{\label{tab:abundancia}Abundancia de pingüinos por especie e isla 
+        en el archipiélago Palmer.}\\
+\toprule
+Isla & Adelie & Gentoo & Chinstrap\\
+\midrule
+Biscoe & 44 & 123 & 0\\
+Dream & 56 & 0 & 68\\
+Torgersen & 51 & 0 & 0\\
+\bottomrule
+\end{longtable}
+
+Aunque \texttt{palmerpenguins} no es un dataset clásico de abundancias
+de especies (es más bien morfométrico), podemos adaptarlo, para ello
+tomamos las especies como categorías biológicas (3 especies:
+\emph{Adelie}, \emph{Gentoo}, \emph{Chinstrap}) y contamos número de
+individuos por especie y por isla, para tener una matriz de abundancias
+que nos permita calcular índices de biodiversidad.
+
+En la \textbf{Tabla 4} se muestra la distribución de individuos por
+especie e isla:
+
+\begin{itemize}
+\item
+  \textbf{Biscoe}: domina la especie \emph{Gentoo} con 123 individuos,
+  seguida por \emph{Adelie} con 44. No se registran individuos en
+  \emph{Chinstrap}.
+\item
+  \textbf{Dream}: comunidad más equilibrada, con 56 \emph{Adelie} y 68
+  \emph{Chinstrap}. No se registran individuos en \emph{Gentoo}.
+\item
+  \textbf{Torgersen}: exclusiva de \emph{Adelie}, con 51 individuos; no
+  se observan individuos de \emph{Gentoo} ni \emph{Chinstrap}.
+\end{itemize}
+
+\textbf{Interpretación general:} Cada isla presenta una composición
+particular. Mientras Biscoe está claramente dominada por \emph{Gentoo},
+Dream muestra coexistencia entre \emph{Adelie} y \emph{Chinstrap}, y
+Torgersen resulta la más restringida, con presencia exclusiva de
+\emph{Adelie}. Esta variación espacial será clave al analizar los
+índices de diversidad y equidad.
+
+\section{Calcular índices de diversidad y curvas de
+rarefacción}\label{calcular-uxedndices-de-diversidad-y-curvas-de-rarefacciuxf3n}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\#Librerías}
+\FunctionTok{library}\NormalTok{(vegan)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Matriz especie x isla}
+\NormalTok{mat }\OtherTok{\textless{}{-}}\NormalTok{ abund }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{island) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as.matrix}\NormalTok{()}
+\FunctionTok{rownames}\NormalTok{(mat) }\OtherTok{\textless{}{-}}\NormalTok{ abund}\SpecialCharTok{$}\NormalTok{island}
+
+\CommentTok{\# índices}
+\NormalTok{shannon  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"shannon"}\NormalTok{)}
+\NormalTok{simpson  }\OtherTok{\textless{}{-}} \FunctionTok{diversity}\NormalTok{(mat, }\AttributeTok{index =} \StringTok{"simpson"}\NormalTok{)}
+\NormalTok{richness }\OtherTok{\textless{}{-}} \FunctionTok{specnumber}\NormalTok{(mat)}
+\NormalTok{evenness }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(richness }\SpecialCharTok{\textgreater{}} \DecValTok{1}\NormalTok{, shannon }\SpecialCharTok{/} \FunctionTok{log}\NormalTok{(richness), }\DecValTok{0}\NormalTok{) }\CommentTok{\# corregido}
+
+\NormalTok{indices }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+  \AttributeTok{Isla     =} \FunctionTok{rownames}\NormalTok{(mat),}
+  \AttributeTok{Riqueza  =}\NormalTok{ richness,}
+  \AttributeTok{Shannon  =} \FunctionTok{round}\NormalTok{(shannon, }\DecValTok{2}\NormalTok{),}
+  \AttributeTok{Simpson  =} \FunctionTok{round}\NormalTok{(simpson, }\DecValTok{2}\NormalTok{),}
+  \AttributeTok{Equidad  =} \FunctionTok{round}\NormalTok{(evenness, }\DecValTok{2}\NormalTok{)}
+\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(indices, }\AttributeTok{caption =} \ConstantTok{NULL}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llrrrr@{}}
+\caption{Índices de diversidad de especies de pingüinos por
+isla.}\tabularnewline
+\toprule\noalign{}
+& Isla & Riqueza & Shannon & Simpson & Equidad \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+& Isla & Riqueza & Shannon & Simpson & Equidad \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Biscoe & Biscoe & 2 & 0.58 & 0.39 & 0.83 \\
+Dream & Dream & 2 & 0.69 & 0.50 & 0.99 \\
+Torgersen & Torgersen & 1 & 0.00 & 0.00 & 0.00 \\
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Curvas de rarefacción}
+\FunctionTok{rarecurve}\NormalTok{(mat, }\AttributeTok{step =} \DecValTok{10}\NormalTok{, }\AttributeTok{sample =} \FunctionTok{min}\NormalTok{(}\FunctionTok{rowSums}\NormalTok{(mat)), }\AttributeTok{col =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{, }
+          \AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Riqueza de especies"}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"bottomright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{rownames}\NormalTok{(mat), }\AttributeTok{col =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{, }
+       \AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{bty =} \StringTok{"n"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \pandocbounded{\includegraphics[keepaspectratio]{Índices-ecológicos_files/figure-pdf/rarefaccion-1.pdf}}
+
+}
+
+\caption{Curvas de rarefacción de riqueza de especies de pingüinos por
+isla.}
+
+\end{figure}%
 
 
 
