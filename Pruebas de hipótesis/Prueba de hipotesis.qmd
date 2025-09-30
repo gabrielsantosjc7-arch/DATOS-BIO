@@ -90,3 +90,27 @@ p + ggpubr::stat_pvalue_manual(dunn_res, label = "p.adj.signif",
     tip.length = 0.01)
 
 ```
+## Anova con transformación logarítmica
+
+```{r}
+#| label: anova_log_supuestos
+
+df <- df %>%
+  mutate(log_bill_length = log(bill_length_mm))
+modelo_log <- aov(log_bill_length ~ species, data = df)
+
+# Supuestos
+shapiro_res <- shapiro.test(residuals(modelo_log))
+levene_res  <- leveneTest(log_bill_length ~ species, data = df)
+
+# Tablas
+knitr::kable(
+  broom::tidy(shapiro_res),
+  caption = "Test de normalidad de residuos (Shapiro-Wilk)"
+)
+knitr::kable(
+  broom::tidy(levene_res),
+  caption = "Test de homogeneidad de varianzas (Levene)"
+)
+
+```
