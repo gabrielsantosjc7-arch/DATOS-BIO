@@ -39,3 +39,11 @@ knitr::kable(kruskal_res, caption = "Prueba Kruskal-Wallis global")
 
 
 ```
+```{r}
+#| label: epsilon-squared
+
+# Tamaño de efecto (epsilon-squared)
+Efe <- df %>% kruskal_effsize(bill_length_mm ~ species)
+knitr::kable(Efe, caption = "Tamaño de efecto (epsilon-squared)")
+```
+
