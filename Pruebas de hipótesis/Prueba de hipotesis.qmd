@@ -1,0 +1,324 @@
+---
+title: "Prueba de hipótesis"
+author: "Santos G"
+format: pdf
+editor: visual
+code-overflow: wrap
+toc: true
+toc-depth: 2
+number-sections: true
+keep-tex: true
+code-fold: true
+code-line-numbers: true
+code-tools: true
+code-copy: true
+echo: true
+warning: false
+message: false
+lang: es
+fig-width: 7
+fig-height: 5
+fig-align: center
+fig-cap-location: bottom
+pdf-engine: xelatex
+mainfont: Times New Roman
+papersize: a4
+fontsize: 11pt
+geometry: margin=2.5cm
+---
+
+## Contexto del proyecto
+
+En este análisis trabajaremos con el dataset `palmerpenguins`, que contiene información morfométrica de tres especies (*Adelie, Chinstrap y Gentoo*). Previamente, los datos fueron limpiados y verificados, de modo que ahora podemos avanzar hacia las pruebas estadísticas que comparan medias entre grupos.
+
+**Pregunta de investigación:** ¿Existen diferencias significativas en el largo del pico (*bill_length_mm*) entre las tres especies de pingüinos?
+
+## Carga de líbrerías y datos
+
+```{r}
+#| label: prep
+library(tidyverse)   # dplyr, ggplot2, tidyr: manipulación de datos y gráficos
+library(janitor)     # clean_names(): estandarizar nombres de variables
+library(palmerpenguins) # dataset de ejemplo (penguins)
+library(car)         # leveneTest(): prueba de homogeneidad de varianzas
+library(rstatix)     # funciones rápidas para ANOVA, Kruskal–Wallis, post-hoc
+library(ggpubr)      # visualización de resultados estadísticos
+
+df_raw <- penguins %>% as_tibble() # guardo raw para auditoría
+df <- df_raw %>% clean_names()
+```
+
+```{r}
+#| label: consistencia de variables categóricas
+#| echo: false
+#| include: false
+
+#Variables categóricas
+df %>% summarise(across(where(is.character), n_distinct))
+df %>% summarise(across(where(is.factor), n_distinct))
+df %>% count(species)
+df %>% count(island)
+df %>% count(sex)
+
+#Tipos de variables (convertir a factor si hace falta)
+df <- df %>% 
+  mutate(species = as.factor(species),
+         island  = as.factor(island),
+         sex     = as.factor(sex))
+
+#Revisar posibles inconsistencias de texto
+unique(df$species)
+unique(df$island)
+unique(df$sex)
+
+df1 <- df %>% select(-year) #Eliminar columnas innecesarias
+```
+
+```{r}
+#| label: Manejo de los NA
+#| echo: false
+#| include: false
+
+# Manejo de los NA
+df <- df %>%
+  mutate(
+    n_na_numeric = rowSums(is.na(select(., bill_length_mm, bill_depth_mm,
+                                        flipper_length_mm, body_mass_g)))
+  )
+
+df <- df %>%
+  mutate(
+    sex = case_when(
+      is.na(sex) & n_na_numeric <= 1 ~ "Unknown",  # casi toda la info presente
+      TRUE ~ as.character(sex)                    # dejar como está
+    )
+  )
+
+df <- df %>%
+  filter(!(is.na(bill_length_mm) &
+           is.na(bill_depth_mm) &
+           is.na(flipper_length_mm) &
+           is.na(body_mass_g)))
+
+
+df <- df %>% select(-n_na_numeric) #Eliminar columnas innecesarias
+```
+
+## Verificación de supuestos
+
+```{r}
+#| label: supuestos-anova
+modelo <- aov(bill_length_mm ~ species, data = df)                                  
+
+# Normalidad de residuos
+Normalidad <- shapiro.test(residuals(modelo))
+
+# Homogeneidad de varianzas (Levene)
+Homogeneidad <- leveneTest(bill_length_mm ~ species, data = df)
+
+# Tablas
+knitr::kable(
+  broom::tidy(Normalidad),
+  caption = "Test de normalidad de residuos (Shapiro-Wilk)"
+)
+
+knitr::kable(
+  broom::tidy(Homogeneidad),
+  caption = "Test de homogeneidad de varianzas (Levene)"
+)
+
+```
+
+En la **Tabla 1** se presentan los resultados del test Shapiro–Wilk (W = `r round(Normalidad$statistic,3)`, p = `r signif(Normalidad$p.value,3)` ) el valor p es menor a 0.05; por lo tanto, se rechaza la normalidad de los residuos. En cuanto a la homogeneidad de varianzas, en la **Tabla 2** se reflejan los resultados del test de Levene (F = `r round(Homogeneidad[1,"F value"],3)`, p = `r signif(Homogeneidad[1,"Pr(>F)"],3)` ) arrojó un valor p mayor a 0.05, lo que indica que no se rechaza este supuesto, es decir las varianzas entre grupos pueden considerarse similares.
+
+En consecuencia, dado que el supuesto de normalidad no se cumple, aunque sí el de homogeneidad de varianzas, la opción más segura y robusta es realizar Kruskal–Wallis (prueba no paramétrica).
+
+## Ejeccución del Kruskal-Wallis global
+
+```{r}
+#| label: kruskal_global
+
+# Kruskal-Wallis (global)
+kruskal_res <- df %>% kruskal_test(bill_length_mm ~ species)
+
+# Formatear p-value como p < 0.001 si es muy pequeño
+kruskal_res <- kruskal_res %>%
+  mutate(p = ifelse(p < 0.001, "< 0.001", round(p, 3)))
+
+knitr::kable(kruskal_res, caption = "Prueba Kruskal-Wallis global")
+
+
+```
+
+En la **Tabla 3** se presentan los resultados de la prueba de Kruskal–Wallis: χ² = `r round(kruskal_res$statistic,2)`, gl = 2, p = `r kruskal_res$p`. El valor p es mucho menor a 0.001, lo que indica diferencias altamente significativas en el largo del pico entre las tres especies de pingüinos.
+
+```{r}
+#| label: epsilon-squared
+
+# Tamaño de efecto (epsilon-squared)
+Efe <- df %>% kruskal_effsize(bill_length_mm ~ species)
+knitr::kable(Efe, caption = "Tamaño de efecto (epsilon-squared)")
+```
+
+En la **Tabla 4** se muestra el tamaño de efecto (ε²): `r df %>% kruskal_effsize(bill_length_mm ~ species) %>% pull(effsize)`. Este resultado confirma que la magnitud de estas diferencias es muy grande: la variable “especie” explica aproximadamente el 71% de la variación en el largo del pico. Esto significa que el largo del pico no varía al azar, sino que está fuertemente determinado por la especie.
+
+## Comparaciones post-hoc (Dunn, corrección Bonferroni)
+
+```{r}
+#| label: dunn_posthoc
+
+# Dunn test con corrección Bonferroni
+dunn_res <- df %>%
+  dunn_test(bill_length_mm ~ species, p.adjust.method = "bonferroni") %>%
+  mutate(p = ifelse(p < 0.001, "< 0.001", round(p, 3)),
+         p.adj = ifelse(p.adj < 0.001, "< 0.001", round(p.adj, 3)))
+
+knitr::kable(dunn_res, caption = "Comparaciones post-hoc (Dunn, Bonferroni)")
+
+
+
+
+```
+
+En la **Tabla 5** se presentan las comparaciones por pares (Dunn, Bonferroni):
+
+-   *Adelie* vs *Chinstrap*: p.adj = `r dunn_res$p.adj[1]` → significativo (\*\*\*\*).
+
+-   *Adelie* vs *Gentoo*: p.adj = `r dunn_res$p.adj[2]` → significativo (\*\*\*\*).
+
+-   *Chinstrap* vs *Gentoo*: p.adj = `r dunn_res$p.adj[3]` → no significativo (ns).
+
+Las comparaciones muestran que el largo del pico en *Adelie* difiere significativamente tanto de *Chinstrap* como de *Gentoo*. Mientras que entre *Chinstrap* y *Gentoo* no se detectan diferencias estadísticamente significativas en el largo del pico. Esto sugiere que la dieta de *Adelie* es distinta a la de las otras especies. Mientras que entre *Gentoo* y *Chinstrap*, podrían compartir parcialmente los mismos recursos tróficos. En conjunto, la prueba confirma una clara segregación de *Adelie* respecto a las otras especies, lo que reduce la competencia y favorece la coexistencia de las tres especies en el ecosistema antártico.
+
+```{r}
+#| label: boxplot_kruskal
+#| fig-cap: "Boxplot de bill_length_mm por especie con comparaciones post-hoc (Dunn)."
+#| fig-width: 6
+#| fig-height: 4
+
+# Añadir posiciones y columnas útiles para gráficas
+dunn_res <- dunn_res %>% add_xy_position(x = "species")
+
+# Calcula un y-position razonable para las etiquetas
+y_max <- max(df$bill_length_mm, na.rm = TRUE)
+dunn_res <- dunn_res %>% mutate(y.position = y_max + seq(0.5, by = 0.5, 
+  length.out = nrow(dunn_res)))
+
+p <- ggplot(df, aes(x = species, y = bill_length_mm, fill = species)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.15, alpha = 0.5, size = 1) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(x = "Especie", y = "Largo del pico (mm)",
+       title = "Comparación del largo del pico entre especies")
+
+# Añadir anotaciones de p ajustadas
+p + ggpubr::stat_pvalue_manual(dunn_res, label = "p.adj.signif", 
+    tip.length = 0.01)
+
+```
+
+La **Figura 1** muestra la distribución del largo del pico en las tres especies de pingüinos (*Adelie*, *Chinstrap* y *Gentoo*). Se observa que los *Adelie* presentan valores menores y más concentrados (mediana cercana a 38–40 mm), mientras que los *Chinstrap* tienen los picos más largos (mediana en torno a 48–50 mm). Los *Gentoo* ocupan una posición intermedia, con valores cercanos a 46–48 mm y mayor variabilidad en comparación con *Adelie*.
+
+Las comparaciones post-hoc de Dunn con corrección de Bonferroni evidencian diferencias altamente significativas en *Adelie vs Chinstrap* (\*\*\*\*) y *Adelie vs Gentoo* (\*\*\*\**).* Por el contrario, no se encontraron diferencias significativas entre *Chinstrap* vs *Gentoo* (ns).
+
+## Conclusiones Kruskall-Wallis
+
+-   El análisis estadístico mediante Kruskal–Wallis confirmó diferencias significativas en la distribución del largo del pico entre especies de pingüinos (χ² = 244.1, p \< 0.001), con un tamaño de efecto muy grande (ε² = 0.71). Esto indica que la especie explica una proporción sustancial de la variabilidad observada en la morfología del pico.
+
+-   Las pruebas post-hoc mostraron que los *Adelie* difieren significativamente de *Chinstrap* y *Gentoo*, mientras que estas dos últimas no presentan diferencias estadísticamente significativas entre sí.
+
+-   Desde una perspectiva ecológica, los resultados sugieren que *Adelie* ocupa un nicho trófico diferenciado, asociado al consumo de krill y pequeños invertebrados, lo que reduce la competencia directa con las otras especies. En cambio, *Gentoo* y *Chinstrap*, al presentar longitudes de pico más similares, podrían solaparse en el aprovechamiento de presas de mayor tamaño (peces e invertebrados grandes).
+
+-   En conjunto, los hallazgos respaldan la hipótesis de una segregación morfológica y trófica que favorece la coexistencia de las tres especies en el ecosistema antártico.
+
+## Anova con transformación logarítmica
+
+```{r}
+#| label: anova_log_supuestos
+
+df <- df %>%
+  mutate(log_bill_length = log(bill_length_mm))
+modelo_log <- aov(log_bill_length ~ species, data = df)
+
+# Supuestos
+shapiro_res <- shapiro.test(residuals(modelo_log))
+levene_res  <- leveneTest(log_bill_length ~ species, data = df)
+
+# Tablas
+knitr::kable(
+  broom::tidy(shapiro_res),
+  caption = "Test de normalidad de residuos (Shapiro-Wilk)"
+)
+knitr::kable(
+  broom::tidy(levene_res),
+  caption = "Test de homogeneidad de varianzas (Levene)"
+)
+
+```
+
+En la **Tabla 6** se presentan los resultados del test Shapiro–Wilk (W = `r round(shapiro_res$statistic,3)`, p = `r signif(shapiro_res$p.value,3)` ) el valor p es mayor a 0.05; por lo tanto, no se rechaza la normalidad de los residuos. En cuanto a la homogeneidad de varianzas, en la **Tabla 7** se reflejan los resultados del test de Levene (F = `r round(levene_res[1,"F value"],3)`, p = `r signif(levene_res[1,"Pr(>F)"],3)` ) arrojó un valor p mayor a 0.05, lo que indica que no se rechaza este supuesto, es decir las varianzas entre grupos pueden considerarse similares.
+
+```{r}
+#| label: anova_log
+# Guardar en tidy para columnas limpias
+anova_res <- broom::tidy(modelo_log) %>%
+  mutate(p.value = case_when(
+    p.value < 0.001 ~ "< 0.001",
+    TRUE ~ as.character(round(p.value, 3))
+  ))
+knitr::kable(
+  anova_res,
+  caption = "Resultados de la prueba ANOVA (log-transformado)"
+)
+
+```
+
+En la **Tabla 8** se presentan los resultados de la prueba de ANOVA (log-transformado): F = `r round(as.numeric(anova_res$statistic[1]),1)`, gl = `r anova_res$df[1]`, p \< 0.001. El valor p es mucho menor a 0.001, lo que indica diferencias altamente significativas en el largo del pico entre las tres especies de pingüinos.
+
+## Comparaciones post-hoc (Tukey HSD)
+
+```{r}
+#| label: tukey_log
+
+tukey_res <- TukeyHSD(modelo_log)
+
+tukey_table <- broom::tidy(tukey_res) %>%
+  mutate(
+    adj.p.value = case_when(
+      adj.p.value < 0.001 ~ "< 0.001",
+      TRUE ~ as.character(round(adj.p.value, 3))
+    ),
+    signif = case_when(
+      adj.p.value == "< 0.001" ~ "***",
+      as.numeric(adj.p.value) < 0.01  ~ "**",
+      as.numeric(adj.p.value) < 0.05  ~ "*",
+      TRUE ~ "ns"
+    )
+  )
+
+knitr::kable(
+  tukey_table,
+  caption = "Comparaciones post-hoc (Tukey HSD)"
+)
+```
+
+En la **Tabla 9** se presentan los resultados de las comparaciones por pares (Tukey HSD):
+
+-   *Adelie vs Chinstrap:* p.adj = `r ifelse(tukey_res$species[1,4] < 0.001, "< 0.001", round(tukey_res$species[1,4], 3))` → diferencia altamente significativa (\*\*\*).\
+-   *Adelie vs Gentoo:* p.adj = `r ifelse(tukey_res$species[2,4] < 0.001, "< 0.001", round(tukey_res$species[2,4], 3))` → diferencia altamente significativa (\*\*\*).\
+-   *Chinstrap vs Gentoo:* p.adj = `r ifelse(tukey_res$species[3,4] < 0.001, "< 0.001", round(tukey_res$species[3,4], 3))` → diferencia significativa, aunque de magnitud menor (\*).
+
+Los resultados muestran que el largo del pico en *Adelie* difiere de forma marcada respecto a *Chinstrap* y *Gentoo*. En contraste, *Chinstrap* y *Gentoo* presentan una diferencia estadísticamente significativa pero pequeña, lo que sugiere cierto solapamiento ecológico entre ambas especies.
+
+En conjunto, la prueba confirma una clara segregación de *Adelie* en términos de morfología y, por extensión, de dieta (más especializada en krill e invertebrados pequeños). Por otro lado, *Chinstrap* y *Gentoo* parecen compartir parcialmente los mismos recursos tróficos, aunque mantienen diferencias detectables. Esto apoya la hipótesis de que la diversificación morfológica reduce la competencia y favorece la coexistencia de las tres especies en el ecosistema antártico.
+
+## Conclusiones Anova (log-transformado)
+
+-   El ANOVA con transformación logarítmica confirmó diferencias significativas en el largo del pico entre especies (F = 427.6, p \< 0.001).
+
+-   El post-hoc Tukey corroboró que *Adelie* difiere de *Chinstrap* y *Gentoo*, y además detectó una diferencia débil pero significativa entre Chinstrap y Gentoo (p = 0.02).
+
+-   Desde un punto de vista ecológico ambos enfoques concuerdan en que *Adelie* presenta un nicho trófico diferenciado (picos más cortos y especializados en krill e invertebrados pequeños). Por su parte, *Chinstrap* y *Gentoo* muestran solapamiento parcial, aunque el ANOVA sugiere cierta divergencia morfológica que podría traducirse en un aprovechamiento diferenciado de los recursos.
+
+Esto complementa los hallazgos del Kruskal–Wallis: mientras este último no detectó diferencias entre *Chinstrap* y *Gentoo*, el ANOVA más sensible identificó una separación sutil.
