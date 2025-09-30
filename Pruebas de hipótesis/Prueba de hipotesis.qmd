@@ -114,3 +114,29 @@ knitr::kable(
 )
 
 ```
+## Comparaciones post-hoc (Tukey HSD)
+
+```{r}
+#| label: tukey_log
+
+tukey_res <- TukeyHSD(modelo_log)
+
+tukey_table <- broom::tidy(tukey_res) %>%
+  mutate(
+    adj.p.value = case_when(
+      adj.p.value < 0.001 ~ "< 0.001",
+      TRUE ~ as.character(round(adj.p.value, 3))
+    ),
+    signif = case_when(
+      adj.p.value == "< 0.001" ~ "***",
+      as.numeric(adj.p.value) < 0.01  ~ "**",
+      as.numeric(adj.p.value) < 0.05  ~ "*",
+      TRUE ~ "ns"
+    )
+  )
+
+knitr::kable(
+  tukey_table,
+  caption = "Comparaciones post-hoc (Tukey HSD)"
+)
+```
