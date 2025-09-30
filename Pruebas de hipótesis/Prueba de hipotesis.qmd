@@ -23,3 +23,19 @@ knitr::kable(
 
 ```
 
+## Ejeccución del Kruskal-Wallis global
+
+```{r}
+#| label: kruskal_global
+
+# Kruskal-Wallis (global)
+kruskal_res <- df %>% kruskal_test(bill_length_mm ~ species)
+
+# Formatear p-value como p < 0.001 si es muy pequeño
+kruskal_res <- kruskal_res %>%
+  mutate(p = ifelse(p < 0.001, "< 0.001", round(p, 3)))
+
+knitr::kable(kruskal_res, caption = "Prueba Kruskal-Wallis global")
+
+
+```
