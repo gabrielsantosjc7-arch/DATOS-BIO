@@ -47,3 +47,19 @@ Efe <- df %>% kruskal_effsize(bill_length_mm ~ species)
 knitr::kable(Efe, caption = "Tamaño de efecto (epsilon-squared)")
 ```
 
+## Comparaciones post-hoc (Dunn, corrección Bonferroni)
+
+```{r}
+#| label: dunn_posthoc
+
+# Dunn test con corrección Bonferroni
+dunn_res <- df %>%
+  dunn_test(bill_length_mm ~ species, p.adjust.method = "bonferroni") %>%
+  mutate(p = ifelse(p < 0.001, "< 0.001", round(p, 3)),
+         p.adj = ifelse(p.adj < 0.001, "< 0.001", round(p.adj, 3)))
+
+knitr::kable(dunn_res, caption = "Comparaciones post-hoc (Dunn, Bonferroni)")
+
+
+
+
