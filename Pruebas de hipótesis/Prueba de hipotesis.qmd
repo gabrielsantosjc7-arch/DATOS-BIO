@@ -1,0 +1,25 @@
+## Verificación de supuestos
+
+```{r}
+#| label: supuestos-anova
+modelo <- aov(bill_length_mm ~ species, data = df)                                  
+
+# Normalidad de residuos
+Normalidad <- shapiro.test(residuals(modelo))
+
+# Homogeneidad de varianzas (Levene)
+Homogeneidad <- leveneTest(bill_length_mm ~ species, data = df)
+
+# Tablas
+knitr::kable(
+  broom::tidy(Normalidad),
+  caption = "Test de normalidad de residuos (Shapiro-Wilk)"
+)
+
+knitr::kable(
+  broom::tidy(Homogeneidad),
+  caption = "Test de homogeneidad de varianzas (Levene)"
+)
+
+```
+
