@@ -63,3 +63,30 @@ knitr::kable(dunn_res, caption = "Comparaciones post-hoc (Dunn, Bonferroni)")
 
 
 
+```{r}
+#| label: boxplot_kruskal
+#| fig-cap: "Boxplot de bill_length_mm por especie con comparaciones post-hoc (Dunn)."
+#| fig-width: 6
+#| fig-height: 4
+
+# Añadir posiciones y columnas útiles para gráficas
+dunn_res <- dunn_res %>% add_xy_position(x = "species")
+
+# Calcula un y-position razonable para las etiquetas
+y_max <- max(df$bill_length_mm, na.rm = TRUE)
+dunn_res <- dunn_res %>% mutate(y.position = y_max + seq(0.5, by = 0.5, 
+  length.out = nrow(dunn_res)))
+
+p <- ggplot(df, aes(x = species, y = bill_length_mm, fill = species)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.15, alpha = 0.5, size = 1) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(x = "Especie", y = "Largo del pico (mm)",
+       title = "Comparación del largo del pico entre especies")
+
+# Añadir anotaciones de p ajustadas
+p + ggpubr::stat_pvalue_manual(dunn_res, label = "p.adj.signif", 
+    tip.length = 0.01)
+
+```
