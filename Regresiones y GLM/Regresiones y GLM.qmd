@@ -154,3 +154,58 @@ knitr::kable(tests_table, caption = "Resultados de los tests
              de supuestos del modelo lineal")
 
 ```
+```{r}
+#| label: Influencia
+# Calcular medidas de influencia
+cooks <- cooks.distance(modelo_lm)
+hatv  <- hatvalues(modelo_lm)
+rstudent_vals <- rstudent(modelo_lm)
+
+# Crear tabla con observaciones influyentes
+influential <- tibble(
+  index = seq_along(cooks),
+  cooks = cooks,
+  hat = hatv,
+  rstudent = rstudent_vals
+) %>%
+  mutate(
+    cooks_flag = cooks > (4/length(cooks)),
+    rstudent_flag = abs(rstudent) > 3,
+    hat_flag = hat > (2*(k+1)/n)
+  ) %>%
+  filter(cooks_flag | rstudent_flag | hat_flag) %>%
+  arrange(desc(cooks)) %>%
+  mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(influential, caption = "Observaciones potencialmente 
+             influyentes (Cook’s distance, leverage, residuos studentizados)")
+
+```
+## Outliers / puntos influyentes
+
+```{r}
+#| label: Comparacion
+# Crear modelo sin observaciones influyentes y comparar coeficientes
+in_idx <- influential$index
+
+if(length(in_idx) > 0){
+  modelo_lm_noinf <- lm(bill_length_mm ~ flipper_length_mm,
+                        data = df[-in_idx, ])
+  
+  compare_coefs <- tibble(
+    original = broom::tidy(modelo_lm)$estimate,
+    no_influ = broom::tidy(modelo_lm_noinf)$estimate
+  )
+  
+  knitr::kable(
+    compare_coefs %>%
+      mutate(across(where(is.numeric), round, 3)) %>%
+      rename("Modelo original" = original,
+             "Modelo sin influyentes" = no_influ),
+    caption = "Comparación de coeficientes estimados con 
+    y sin observaciones influyentes."
+  )
+} else {
+  "No se detectaron observaciones influyentes con los umbrales establecidos."
+}
+
