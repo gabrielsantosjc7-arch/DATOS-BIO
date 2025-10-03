@@ -1,0 +1,14 @@
+## Visualización inicial + correlación
+
+```{r}
+#| label: scatter_cor
+#| fig-cap: "Scatter con línea de regresión entre las variables biil length y flipper length."
+# Scatter con línea de regresión (usa df ya limpio)
+ggplot(df, aes(x = flipper_length_mm, y = bill_length_mm)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, formula = y ~ x) +
+  labs(x = "Flipper length (mm)", y = "Bill length (mm)",
+       title = "Relación bill_length_mm ~ flipper_length_mm") +
+  theme_minimal()
+
+```
