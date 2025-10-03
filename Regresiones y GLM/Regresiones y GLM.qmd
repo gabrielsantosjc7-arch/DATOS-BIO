@@ -209,3 +209,27 @@ if(length(in_idx) > 0){
   "No se detectaron observaciones influyentes con los umbrales establecidos."
 }
 
+#| label: modelo-multiple
+# Modelo de regresión múltiple: bill_length ~ flipper_length + species
+modelo_lm_multi <- lm(bill_length_mm ~ flipper_length_mm + species, data = df)
+
+# Resumen de coeficientes
+tabla_multi <- broom::tidy(modelo_lm_multi, conf.int = TRUE)
+
+knitr::kable(
+  tabla_multi %>%
+    mutate(across(where(is.numeric), round, 3)),
+  caption = "Coeficientes estimados del modelo lineal múltiple 
+  (longitud del pico como variable respuesta)."
+)
+
+```
+```{r}
+# Métricas generales del modelo
+tabla_multi_glance <- broom::glance(modelo_lm_multi)
+
+knitr::kable(
+  tabla_multi_glance %>%
+  caption = "Estadísticos de ajuste del modelo múltiple."
+)
+```

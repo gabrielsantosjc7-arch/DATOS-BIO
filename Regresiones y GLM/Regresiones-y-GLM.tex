@@ -208,7 +208,7 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
 \hypersetup{
-  pdftitle={Regresion lineal, múltiple y GLM},
+  pdftitle={Regresiones lineales simples y múltiples},
   pdfauthor={Santos G},
   pdflang={es},
   colorlinks=true,
@@ -219,7 +219,7 @@
   pdfcreator={LaTeX via pandoc}}
 
 
-\title{Regresion lineal, múltiple y GLM}
+\title{Regresiones lineales simples y múltiples}
 \author{Santos G}
 \date{}
 \begin{document}
@@ -367,7 +367,7 @@ con el tamaño corporal de los pingüinos, lo cual es esperado en términos
 de allometría: individuos con alas más largas (indicador del tamaño
 total) tienden a presentar picos más largos.
 
-\section{Modelo lineal simple}\label{modelo-lineal-simple}
+\section{Regresión lineal simple}\label{regresiuxf3n-lineal-simple}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -511,9 +511,6 @@ diversificadas. En conjunto, el modelo indica que la morfología del pico
 no es independiente del tamaño general del cuerpo, sino que ambas
 variables están estrechamente relacionadas.
 
-\section{Intervalos de confianza y
-predicción}\label{intervalos-de-confianza-y-predicciuxf3n}
-
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\# IC 95\% para coeficientes directamente con confint}
@@ -646,7 +643,8 @@ predice el tamaño del pico en promedio, cada pingüino puede desviarse de
 esa tendencia debido a factores adicionales como edad, sexo, o
 adaptaciones específicas relacionadas con la dieta y el hábitat.
 
-\section{Diagnósticos de supuestos}\label{diagnuxf3sticos-de-supuestos}
+\section{Diagnósticos del modelo
+lineal}\label{diagnuxf3sticos-del-modelo-lineal}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -855,9 +853,6 @@ a individuos atípicos, errores de medición o variabilidad natural de las
 poblaciones, y su tratamiento debe basarse en criterios ecológicos
 además de estadísticos.
 
-\section{Outliers / puntos
-influyentes}\label{outliers-puntos-influyentes}
-
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\# Crear modelo sin observaciones influyentes y comparar coeficientes}
@@ -910,7 +905,8 @@ pendiente de 0.255 a 0.263. Aunque los cambios son moderados, evidencian
 que las observaciones influyentes, especialmente la 292, tienen un
 impacto en la magnitud de los parámetros.
 
-\section{Conclusiones generales}\label{conclusiones-generales}
+\section{Conclusiones del modelo
+lineal}\label{conclusiones-del-modelo-lineal}
 
 El modelo lineal confirma una relación positiva fuerte entre el largo
 del ala y el largo del pico en pingüinos, aunque presenta violaciones a
@@ -950,6 +946,462 @@ información valiosa, es necesario avanzar hacia enfoques más robustos:
   cautela debido a las violaciones de supuestos y la influencia de casos
   extremos.
 \end{itemize}
+
+\section{Regresión lineal
+múltiple}\label{regresiuxf3n-lineal-muxfaltiple}
+
+En vez de usar solo \texttt{flipper\_length\_mm} como predictor del
+\texttt{bill\_length\_mm}, ahora incluiremos la especie como variable
+categórica. Esto nos permite responder:
+
+\begin{itemize}
+\item
+  ¿Sigue siendo significativa la relación entre longitud de ala y pico,
+  una vez controlamos por especie?
+\item
+  ¿Existen diferencias en la longitud del pico atribuibles directamente
+  a la especie?
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Modelo de regresión múltiple: bill\_length \textasciitilde{} flipper\_length + species}
+\NormalTok{modelo\_lm\_multi }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(bill\_length\_mm }\SpecialCharTok{\textasciitilde{}}\NormalTok{ flipper\_length\_mm }\SpecialCharTok{+}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+
+\CommentTok{\# Resumen de coeficientes}
+\NormalTok{tabla\_multi }\OtherTok{\textless{}{-}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(modelo\_lm\_multi, }\AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}
+\NormalTok{  tabla\_multi }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{)),}
+  \AttributeTok{caption =} \StringTok{"Coeficientes estimados del modelo lineal múltiple }
+\StringTok{  (longitud del pico como variable respuesta)."}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.2432}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1216}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1351}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1351}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1081}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1216}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1351}}@{}}
+\caption{Coeficientes estimados del modelo lineal múltiple (longitud del
+pico como variable respuesta).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+(Intercept) & -2.059 & 4.039 & -0.510 & 0.611 & -10.002 & 5.885 \\
+flipper\_length\_mm & 0.215 & 0.021 & 10.129 & 0.000 & 0.173 & 0.257 \\
+speciesChinstrap & 8.780 & 0.399 & 21.998 & 0.000 & 7.995 & 9.565 \\
+speciesGentoo & 2.857 & 0.659 & 4.338 & 0.000 & 1.561 & 4.152 \\
+\end{longtable}
+
+La \textbf{Tabla 10} muestra los coeficientes del modelo múltiple que
+relaciona la longitud del pico (\texttt{bill\_length\_mm}) con la
+longitud del ala (\texttt{flipper\_length\_mm}) y la especie.
+
+\begin{itemize}
+\item
+  El intercepto (β0 = -2.06, p = 0.611) no es significativo y representa
+  la longitud promedio del pico para pingüinos \emph{Adelie} (categoría
+  de referencia) con longitud de ala igual a cero. Este valor carece de
+  interpretación biológica directa, pero es necesario para el modelo.
+\item
+  El coeficiente de \texttt{flipper\_length\_mm} (β1 = 0.215, p
+  \textless{} 0.001) indica que, controlando por especie, un aumento de
+  1 mm en la longitud del ala se asocia con un incremento promedio de
+  0.215 mm en la longitud del pico. Esto confirma una relación
+  alométrica positiva entre el tamaño corporal y la morfología del pico
+  dentro de cada especie.
+\item
+  La especie \emph{Chinstrap} presenta un pico en promedio 8.78 mm más
+  largo que los \emph{Adelie} (p \textless{} 0.001), mientras que los
+  \emph{Gentoo} presentan picos 2.86 mm más largos que los \emph{Adelie}
+  (p \textless{} 0.001), ajustando por longitud del ala. Estas
+  diferencias son significativas y reflejan divergencias morfológicas
+  marcadas entre especies.
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Métricas generales del modelo}
+\NormalTok{tabla\_multi\_glance }\OtherTok{\textless{}{-}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(modelo\_lm\_multi)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}
+\NormalTok{  tabla\_multi\_glance }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{)),}
+  \AttributeTok{caption =} \StringTok{"Estadísticos de ajuste del modelo múltiple."}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0971}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.1359}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0583}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0971}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0777}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0291}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0777}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0874}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0874}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0874}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.1165}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 22\tabcolsep) * \real{0.0485}}@{}}
+\caption{Estadísticos de ajuste del modelo múltiple.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+logLik
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+deviance
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+logLik
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+deviance
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.776 & 0.774 & 2.596 & 389.966 & 0 & 3 & -809.56 & 1629.119 & 1648.294
+& 2278.337 & 338 & 342 \\
+\end{longtable}
+
+La \textbf{Tabla 11} muestra los estadísticos globales del ajuste. El
+modelo explica un 77.6\% de la variabilidad en la longitud del pico (R²
+= 0.776), lo cual representa una mejora sustancial respecto al modelo
+simple (R² ≈ 0.43). El error residual (σ = 2.60 mm) es considerablemente
+menor que en el modelo simple, indicando un mejor ajuste.
+
+En conjunto, el modelo múltiple sugiere que tanto el tamaño corporal
+(longitud de ala) como la especie son predictores clave de la longitud
+del pico. Desde un punto de vista ecológico, esto refleja que la
+morfología del pico no solo está asociada al tamaño general del cuerpo,
+sino que también depende de adaptaciones específicas entre especies,
+posiblemente vinculadas a diferencias en dieta, ecología trófica o
+hábitat.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Comparar modelo simple vs múltiple}
+\NormalTok{modelo\_simple }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(bill\_length\_mm }\SpecialCharTok{\textasciitilde{}}\NormalTok{ flipper\_length\_mm, }\AttributeTok{data =}\NormalTok{ df)}
+\NormalTok{modelo\_multiple }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(bill\_length\_mm }\SpecialCharTok{\textasciitilde{}}\NormalTok{ flipper\_length\_mm }\SpecialCharTok{+}\NormalTok{ species, }\AttributeTok{data =}\NormalTok{ df)}
+
+\CommentTok{\# Extraer métricas de ajuste}
+\NormalTok{comp\_models }\OtherTok{\textless{}{-}} \FunctionTok{bind\_rows}\NormalTok{(}
+\NormalTok{  broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(modelo\_simple) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{modelo =} \StringTok{"Simple"}\NormalTok{),}
+\NormalTok{  broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(modelo\_multiple) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{modelo =} \StringTok{"Múltiple"}\NormalTok{)}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(modelo, r.squared, adj.r.squared, AIC, BIC, sigma, p.value) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}}\FunctionTok{round}\NormalTok{(., }\DecValTok{3}\NormalTok{)))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(comp\_models,}
+             \AttributeTok{caption =} \StringTok{"Comparación entre el modelo }
+\StringTok{             lineal simple y múltiple"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1385}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1538}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.2154}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1385}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1385}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.0923}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1231}}@{}}
+\caption{Comparación entre el modelo lineal simple y
+múltiple}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Simple & 0.431 & 0.429 & 1943.966 & 1955.471 & 4.126 & 0 \\
+Múltiple & 0.776 & 0.774 & 1629.119 & 1648.294 & 2.596 & 0 \\
+\end{longtable}
+
+La \textbf{Tabla 12} compara el modelo lineal simple y el múltiple. El
+modelo simple (solo con la longitud del ala) explica alrededor del 43\%
+de la variación en la longitud del pico (R² = 0.431), mientras que el
+modelo múltiple (incluyendo la especie) aumenta notablemente la
+capacidad explicativa hasta un 77\% (R² = 0.776).
+
+Además, los criterios de información (AIC y BIC) son considerablemente
+menores en el modelo múltiple, lo que indica un mejor ajuste penalizado
+por complejidad. En conjunto, la comparación sugiere que la variable
+especie aporta información fundamental para explicar las diferencias en
+la longitud del pico, más allá del tamaño corporal.
+
+\section{Diagnósticos del modelo
+múltiple}\label{diagnuxf3sticos-del-modelo-muxfaltiple}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Residuos del modelo múltiple}
+\NormalTok{residuales\_m }\OtherTok{\textless{}{-}} \FunctionTok{resid}\NormalTok{(modelo\_multiple)}
+
+\CommentTok{\# Pruebas de supuestos}
+\NormalTok{shapiro\_res\_m }\OtherTok{\textless{}{-}} \FunctionTok{shapiro.test}\NormalTok{(residuales\_m)}
+\NormalTok{bptest\_res\_m  }\OtherTok{\textless{}{-}}\NormalTok{ lmtest}\SpecialCharTok{::}\FunctionTok{bptest}\NormalTok{(modelo\_multiple)}
+\NormalTok{dw\_res\_m      }\OtherTok{\textless{}{-}}\NormalTok{ lmtest}\SpecialCharTok{::}\FunctionTok{dwtest}\NormalTok{(modelo\_multiple)}
+
+\CommentTok{\# Resumen en tabla}
+\NormalTok{tests\_table\_m }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{Test =} \FunctionTok{c}\NormalTok{(}\StringTok{"Shapiro{-}Wilk (normalidad)"}\NormalTok{,}
+           \StringTok{"Breusch{-}Pagan (homocedasticidad)"}\NormalTok{,}
+           \StringTok{"Durbin{-}Watson (independencia)"}\NormalTok{),}
+\NormalTok{  Estadístico }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\FunctionTok{round}\NormalTok{(shapiro\_res\_m}\SpecialCharTok{$}\NormalTok{statistic, }\DecValTok{3}\NormalTok{),}
+                  \FunctionTok{round}\NormalTok{(bptest\_res\_m}\SpecialCharTok{$}\NormalTok{statistic, }\DecValTok{3}\NormalTok{),}
+                  \FunctionTok{round}\NormalTok{(dw\_res\_m}\SpecialCharTok{$}\NormalTok{statistic, }\DecValTok{3}\NormalTok{)),}
+  \AttributeTok{p\_value =} \FunctionTok{c}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(shapiro\_res\_m}\SpecialCharTok{$}\NormalTok{p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{}0.001"}\NormalTok{, }
+                     \FunctionTok{round}\NormalTok{(shapiro\_res\_m}\SpecialCharTok{$}\NormalTok{p.value, }\DecValTok{3}\NormalTok{)),}
+              \FunctionTok{ifelse}\NormalTok{(bptest\_res\_m}\SpecialCharTok{$}\NormalTok{p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{}0.001"}\NormalTok{, }
+                     \FunctionTok{round}\NormalTok{(bptest\_res\_m}\SpecialCharTok{$}\NormalTok{p.value, }\DecValTok{3}\NormalTok{)),}
+              \FunctionTok{ifelse}\NormalTok{(dw\_res\_m}\SpecialCharTok{$}\NormalTok{p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{}0.001"}\NormalTok{, }
+                     \FunctionTok{round}\NormalTok{(dw\_res\_m}\SpecialCharTok{$}\NormalTok{p.value, }\DecValTok{3}\NormalTok{)))}
+\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(tests\_table\_m,}
+             \AttributeTok{caption =} \StringTok{"Resultados de las pruebas de }
+\StringTok{             supuestos del modelo múltiple"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrr@{}}
+\caption{Resultados de las pruebas de supuestos del modelo
+múltiple}\tabularnewline
+\toprule\noalign{}
+Test & Estadístico & p\_value \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Test & Estadístico & p\_value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Shapiro-Wilk (normalidad) & 0.985 & 0.001 \\
+Breusch-Pagan (homocedasticidad) & 2.923 & 0.404 \\
+Durbin-Watson (independencia) & 2.450 & 1.000 \\
+\end{longtable}
+
+La \textbf{Tabla 13} presenta las pruebas de supuestos del modelo lineal
+múltiple. El test de Shapiro-Wilk indica un valor \emph{p = 0.001}, lo
+que sugiere que los residuos se desvían de una distribución normal
+perfecta. Sin embargo, dado el tamaño de la muestra, pequeñas
+desviaciones pueden detectarse como significativas sin afectar
+sustancialmente la validez del modelo. El test de Breusch-Pagan (\emph{p
+= 0.404}) no rechaza la hipótesis de homocedasticidad, por lo que no hay
+evidencia de heterocedasticidad. Por su parte, el test de Durbin-Watson
+muestra un valor cercano a 2 (\emph{p = 1.000}), lo que respalda la
+ausencia de autocorrelación en los residuos. En conjunto, estos
+resultados sugieren que los supuestos principales de homogeneidad e
+independencia se cumplen, mientras que la normalidad de los residuos
+presenta una ligera desviación.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Influencia en el modelo múltiple}
+\NormalTok{cooks\_m }\OtherTok{\textless{}{-}} \FunctionTok{cooks.distance}\NormalTok{(modelo\_multiple)}
+\NormalTok{hatv\_m  }\OtherTok{\textless{}{-}} \FunctionTok{hatvalues}\NormalTok{(modelo\_multiple)}
+\NormalTok{rstud\_m }\OtherTok{\textless{}{-}} \FunctionTok{rstudent}\NormalTok{(modelo\_multiple)}
+
+\NormalTok{influential\_m }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{index =} \FunctionTok{seq\_along}\NormalTok{(cooks\_m),}
+  \AttributeTok{cooks =}\NormalTok{ cooks\_m,}
+  \AttributeTok{leverage =}\NormalTok{ hatv\_m,}
+  \AttributeTok{rstudent =}\NormalTok{ rstud\_m}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(cooks }\SpecialCharTok{\textgreater{}} \DecValTok{4}\SpecialCharTok{/}\FunctionTok{length}\NormalTok{(cooks\_m) }\SpecialCharTok{|} \FunctionTok{abs}\NormalTok{(rstudent) }\SpecialCharTok{\textgreater{}} \DecValTok{3}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(influential\_m,}
+             \AttributeTok{caption =} \StringTok{"Observaciones potencialmente }
+\StringTok{             influyentes en el modelo múltiple"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\caption{Observaciones potencialmente influyentes en el modelo
+múltiple}\tabularnewline
+\toprule\noalign{}
+index & cooks & leverage & rstudent \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+index & cooks & leverage & rstudent \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+14 & 0.015 & 0.011 & -2.308 \\
+37 & 0.016 & 0.013 & 2.163 \\
+90 & 0.020 & 0.016 & -2.219 \\
+122 & 0.015 & 0.020 & 1.720 \\
+185 & 0.064 & 0.019 & 3.700 \\
+215 & 0.012 & 0.021 & 1.491 \\
+250 & 0.013 & 0.022 & 1.540 \\
+253 & 0.023 & 0.016 & 2.373 \\
+267 & 0.017 & 0.019 & 1.889 \\
+292 & 0.177 & 0.029 & 4.998 \\
+295 & 0.012 & 0.029 & -1.270 \\
+305 & 0.028 & 0.020 & -2.364 \\
+307 & 0.015 & 0.020 & -1.731 \\
+322 & 0.014 & 0.032 & -1.298 \\
+323 & 0.016 & 0.020 & 1.781 \\
+329 & 0.015 & 0.020 & -1.731 \\
+338 & 0.019 & 0.023 & 1.784 \\
+339 & 0.029 & 0.017 & -2.611 \\
+\end{longtable}
+
+La \textbf{Tabla 14} muestra las observaciones potencialmente
+influyentes según Cook's distance, leverage y residuos studentizados. En
+particular, los casos 185 y 292 destacan por presentar residuos
+estandarizados mayores a \textbar3\textbar, junto con valores elevados
+de influencia. Esto significa que dichas observaciones pueden ejercer un
+efecto desproporcionado sobre los coeficientes estimados del modelo.
+Desde una perspectiva biológica, estos valores atípicos pueden reflejar
+errores de medición, individuos inusuales o variabilidad real dentro de
+las especies analizadas. Por tanto, más que eliminarlos automáticamente,
+conviene evaluarlos en función del contexto ecológico y de la pregunta
+de investigación.
+
+\section{Conclusiones del modelo
+múltiple}\label{conclusiones-del-modelo-muxfaltiple}
+
+El modelo lineal múltiple, que incluye la longitud de la aleta y la
+especie como predictores de la longitud del pico, explica de manera
+sustancial la variabilidad en los datos (\emph{R² ajustado ≈ 0.77}).
+Esto indica que más de tres cuartas partes de la variación en la
+longitud del pico se pueden atribuir a estas variables, lo que refuerza
+la relevancia de la especie y la morfología corporal en la determinación
+del tamaño del pico.
+
+En términos de supuestos, el modelo cumple adecuadamente con la
+homocedasticidad y la independencia de los residuos, aunque se detecta
+una ligera desviación de la normalidad. Asimismo, se identificaron
+observaciones influyentes (e.g., casos 185 y 292), lo que implica que
+los resultados deben interpretarse con cautela, considerando el contexto
+biológico antes de excluir dichos individuos.
+
+En conjunto, el modelo múltiple representa una mejora clara respecto al
+modelo simple, al capturar mejor la estructura de los datos y aportar
+evidencia de la importancia de la variabilidad entre especies.
 
 
 
