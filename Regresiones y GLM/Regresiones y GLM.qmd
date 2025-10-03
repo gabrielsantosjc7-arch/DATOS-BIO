@@ -96,3 +96,61 @@ knitr::kable(
 )
 
 ```
+```{r}
+#| label: Residuos y fitted
+#| fig-cap: "Gráfico de dispersión entre los residuales y los valores ajustados."
+# Residuos y fitted
+residuales <- residuals(modelo_lm)
+fittedv    <- fitted(modelo_lm)
+n <- nrow(df)
+k <- length(coef(modelo_lm)) - 1  # número de predictores
+
+
+df_diag <- tibble(fitted = fittedv, resid = residuales)
+ggplot(df_diag, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuales vs Fitted", x = "Valores ajustados", 
+       y = "Residuales")
+```
+
+```{r}
+#| label: QQ-plot
+#| fig-cap: "Gráfico QQ-plot residuos."
+#QQ-plot (visual)
+ggplot(tibble(resid = residuales), aes(sample = resid)) +
+  stat_qq() + stat_qq_line() + labs(title = "QQ-plot de residuos")
+```
+
+```{r}
+#| label: Supuestos
+# Tests de supuestos
+
+# Shapiro-Wilk (normalidad)
+shapiro_res <- broom::tidy(shapiro.test(residuales)) %>%
+  mutate(test = "Shapiro-Wilk")
+
+# Breusch-Pagan (heterocedasticidad)
+bptest_res <- broom::tidy(lmtest::bptest(modelo_lm)) %>%
+  mutate(test = "Breusch-Pagan")
+
+# Durbin-Watson (autocorrelación de residuos)
+dw_res <- broom::tidy(lmtest::dwtest(modelo_lm)) %>%
+  mutate(test = "Durbin-Watson")
+
+# Juntar en tabla y ajustar p-values
+tests_table <- bind_rows(shapiro_res, bptest_res, dw_res) %>%
+  select(test, statistic, p.value, method) %>%
+  mutate(
+    p.value = case_when(
+      p.value < 0.001 ~ "< 0.001",
+      TRUE ~ as.character(round(p.value, 3))
+    ),
+    statistic = round(statistic, 3)
+  )
+
+knitr::kable(tests_table, caption = "Resultados de los tests 
+             de supuestos del modelo lineal")
+
+```
