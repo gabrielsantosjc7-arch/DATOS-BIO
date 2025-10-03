@@ -41,3 +41,19 @@ spearman_tab <- broom::tidy(cor_spearman) %>%
 knitr::kable(spearman_tab, caption = "Correlación de Spearman 
              entre bill_length y flipper_length")
 ```
+## Modelo lineal simple
+
+```{r}
+#| label: fit_lm
+# Ajuste del modelo lineal simple
+modelo_lm <- lm(bill_length_mm ~ flipper_length_mm, data = df)
+
+# Coeficientes y resumen del ajuste
+tidy_lm <- broom::tidy(modelo_lm)
+glance_lm <- broom::glance(modelo_lm)
+
+# Tablas presentables para Quarto
+knitr::kable(tidy_lm, caption = "Coeficientes del modelo lineal 
+             (bill_length ~ flipper_length)")
+knitr::kable(glance_lm, caption = "Resumen del ajuste (R², AIC, BIC, etc.)")
+
