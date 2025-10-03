@@ -253,3 +253,61 @@ knitr::kable(comp_models,
              lineal simple y múltiple")
 
 ```
+## Diagnósticos del modelo múltiple
+
+```{r}
+#| label: diagnostico-multiple
+
+# Residuos del modelo múltiple
+residuales_m <- resid(modelo_multiple)
+
+# Pruebas de supuestos
+shapiro_res_m <- shapiro.test(residuales_m)
+bptest_res_m  <- lmtest::bptest(modelo_multiple)
+dw_res_m      <- lmtest::dwtest(modelo_multiple)
+
+# Resumen en tabla
+tests_table_m <- tibble(
+  Test = c("Shapiro-Wilk (normalidad)",
+           "Breusch-Pagan (homocedasticidad)",
+           "Durbin-Watson (independencia)"),
+  Estadístico = c(round(shapiro_res_m$statistic, 3),
+                  round(bptest_res_m$statistic, 3),
+                  round(dw_res_m$statistic, 3)),
+  p_value = c(ifelse(shapiro_res_m$p.value < 0.001, "<0.001", 
+                     round(shapiro_res_m$p.value, 3)),
+              ifelse(bptest_res_m$p.value < 0.001, "<0.001", 
+                     round(bptest_res_m$p.value, 3)),
+              ifelse(dw_res_m$p.value < 0.001, "<0.001", 
+                     round(dw_res_m$p.value, 3)))
+)
+
+knitr::kable(tests_table_m,
+             caption = "Resultados de las pruebas de 
+             supuestos del modelo múltiple")
+
+```
+
+```{r}
+#| label: influencia-multiple
+
+# Influencia en el modelo múltiple
+cooks_m <- cooks.distance(modelo_multiple)
+hatv_m  <- hatvalues(modelo_multiple)
+rstud_m <- rstudent(modelo_multiple)
+
+influential_m <- tibble(
+  index = seq_along(cooks_m),
+  cooks = cooks_m,
+  leverage = hatv_m,
+  rstudent = rstud_m
+) %>%
+  filter(cooks > 4/length(cooks_m) | abs(rstudent) > 3) %>%
+  mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(influential_m,
+             caption = "Observaciones potencialmente 
+             influyentes en el modelo múltiple")
+
+```
+
