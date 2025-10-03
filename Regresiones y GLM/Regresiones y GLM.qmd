@@ -12,3 +12,32 @@ ggplot(df, aes(x = flipper_length_mm, y = bill_length_mm)) +
   theme_minimal()
 
 ```
+```{r}
+#| label: coeficientes_cor
+# Correlación Pearson y Spearman (devuelven objetos htest)
+cor_pearson <- cor.test(df$flipper_length_mm, df$bill_length_mm, 
+                        method = "pearson")
+cor_spearman <- cor.test(df$flipper_length_mm, df$bill_length_mm, 
+                         method = "spearman")
+# Correlación Pearson
+pearson_tab <- broom::tidy(cor_pearson) %>%
+  select(estimate, statistic, p.value, conf.low, conf.high) %>%
+  mutate(
+    p.value = ifelse(p.value < 0.001, "< 0.001", round(p.value, 3)),
+    across(where(is.numeric), round, 3)
+  )
+
+knitr::kable(pearson_tab, caption = "Correlación de Pearson 
+             entre bill_length y flipper_length")
+
+# Correlación Spearman
+spearman_tab <- broom::tidy(cor_spearman) %>%
+  select(estimate, statistic, p.value) %>%
+  mutate(
+    p.value = ifelse(p.value < 0.001, "< 0.001", round(p.value, 3)),
+    across(where(is.numeric), round, 3)
+  )
+
+knitr::kable(spearman_tab, caption = "Correlación de Spearman 
+             entre bill_length y flipper_length")
+```
