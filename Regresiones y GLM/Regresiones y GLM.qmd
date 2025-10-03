@@ -57,3 +57,17 @@ knitr::kable(tidy_lm, caption = "Coeficientes del modelo lineal
              (bill_length ~ flipper_length)")
 knitr::kable(glance_lm, caption = "Resumen del ajuste (R², AIC, BIC, etc.)")
 
+```{r}
+#| label: intervals
+# IC 95% para coeficientes directamente con confint
+ic_coef <- as.data.frame(confint(modelo_lm)) %>%
+  tibble::rownames_to_column("term")
+
+knitr::kable(
+  ic_coef,
+  caption = "Intervalos de confianza (95%) 
+  para los coeficientes del modelo lineal",
+  digits = 3,
+  format = "markdown"
+)
+
