@@ -233,3 +233,23 @@ knitr::kable(
   caption = "Estadísticos de ajuste del modelo múltiple."
 )
 ```
+```{r}
+#| label: comparacion-modelos
+
+# Comparar modelo simple vs múltiple
+modelo_simple <- lm(bill_length_mm ~ flipper_length_mm, data = df)
+modelo_multiple <- lm(bill_length_mm ~ flipper_length_mm + species, data = df)
+
+# Extraer métricas de ajuste
+comp_models <- bind_rows(
+  broom::glance(modelo_simple) %>% mutate(modelo = "Simple"),
+  broom::glance(modelo_multiple) %>% mutate(modelo = "Múltiple")
+) %>%
+  select(modelo, r.squared, adj.r.squared, AIC, BIC, sigma, p.value) %>%
+  mutate(across(where(is.numeric), ~round(., 3)))
+
+knitr::kable(comp_models,
+             caption = "Comparación entre el modelo 
+             lineal simple y múltiple")
+
+```
