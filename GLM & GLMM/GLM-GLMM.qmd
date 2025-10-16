@@ -99,3 +99,37 @@ knitr::kable(as.data.frame(conf_tab))
 
 ```
 
+## Predicciones: tabla presentable y ejemplo de interpretación
+
+```{r}
+#| label: tbl-glm_pred_table
+#| tbl-cap: "Predicciones (probabilidad de pico largo)                            por flipper_length y especie"
+
+# Predicción para valores representativos de flipper por especie
+newdata <- expand.grid(
+  flipper_length_mm = c(170, 190, 210),
+  species = unique(df_glm$species)
+) %>%
+  as_tibble()
+
+preds <- newdata %>%
+  mutate(
+    fit_prob = predict(modelo_glm, newdata = newdata, type = "response"),
+    lwr = NA_real_, upr = NA_real_
+  )
+
+# obtener IC por link (logit) y transformar a prob (opcional)
+pred_link <- predict(modelo_glm, newdata = newdata, se.fit = TRUE, 
+                     type = "link")
+crit <- qnorm(0.975)
+preds <- preds %>%
+  mutate(
+    fit = round(plogis(pred_link$fit), 3),
+    lwr = round(plogis(pred_link$fit - crit * pred_link$se.fit), 3),
+    upr = round(plogis(pred_link$fit + crit * pred_link$se.fit), 3)
+  )
+
+knitr::kable(preds)
+
+```
+
