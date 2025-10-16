@@ -19,3 +19,28 @@ df_glm <- df %>%
 df_glm %>% 
   count(long_bill) %>% 
   knitr::kable()
+## Ajuste del GLM binomial (logit)
+
+```{r}
+#| label: tbl-glm-fit
+#| tbl-cap: "Coeficientes (logit) y Odds Ratios (OR)"
+
+# Ajuste GLM binomial: probabilidad de pico largo según flipper_length y especie
+modelo_glm <- glm(long_bill ~ flipper_length_mm + species,
+                  data = df_glm,
+                  family = binomial(link = "logit"))
+
+# Tabla de coeficientes y OR (odds ratios)
+glm_coef <- broom::tidy(modelo_glm, conf.int = TRUE) %>%
+  mutate(
+    estimate = round(estimate, 4),
+    std.error = round(std.error, 4),
+    p.value = ifelse(p.value < 0.001, "< 0.001", round(p.value, 3)),
+    OR = round(exp(estimate), 3),
+    OR_lwr = round(exp(conf.low), 3),
+    OR_upr = round(exp(conf.high), 3)
+  )
+
+knitr::kable(glm_coef)
+
+```
