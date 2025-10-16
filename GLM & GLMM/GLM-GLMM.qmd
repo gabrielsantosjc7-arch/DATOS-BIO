@@ -58,3 +58,44 @@ glm_glance <- broom::glance(modelo_glm) %>%
 knitr::kable(glm_glance)
 
 ```
+## Diagnósticos GLM: overdispersion y AUC / performance
+
+```{r}
+#| label: tbl-glm-diagnostics
+#| tbl-cap: "Diagnósticos GLM: overdispersion, accuracy y AUC"
+
+# Overdispersion:ratio deviance/df.residual
+
+dispersion <- with(summary(modelo_glm), deviance / df.residual)
+
+# Predicciones y matriz de confusión simple (umbral 0.5)
+df_glm <- df_glm %>%
+  mutate(
+    fitted_prob = predict(modelo_glm, type = "response"),
+    fitted_class = ifelse(fitted_prob >= 0.5, 1, 0)
+  )
+
+conf_tab <- table(Actual = df_glm$long_bill, Predicho = df_glm$fitted_class)
+accuracy <- sum(diag(conf_tab)) / sum(conf_tab)
+
+# AUC / ROC
+roc_obj <- pROC::roc(df_glm$long_bill, df_glm$fitted_prob, quiet = TRUE)
+auc_val <- round(pROC::auc(roc_obj), 3)
+
+# Tablas resumen
+diag_table <- tibble(
+  measure = c("Dispersion (deviance/df)", "Accuracy (threshold 0.5)", "AUC"),
+  value = c(round(dispersion, 3), round(accuracy, 3), auc_val)
+)
+
+knitr::kable(diag_table)
+```
+
+```{r}
+#| label: tbl-glm-confusion
+#| tbl-cap: "Matriz de confusión (GLM, umbral 0.5)"
+
+knitr::kable(as.data.frame(conf_tab))
+
+```
+
