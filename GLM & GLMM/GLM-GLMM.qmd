@@ -173,3 +173,33 @@ knitr::kable(glmm_tidy)
 
 knitr::kable(rand_eff_tbl)
 ```
+## Diagnóstico GLMM y comparación con GLM
+
+```{r}
+#| label: tbl-glmm-diag-compare
+#| tbl-cap: "Comparación AIC/logLik entre GLM y GLMM"
+
+
+# Extract AIC and logLik for comparison
+model_comp <- tibble(
+  model = c("GLM", "GLMM"),
+  AIC = c(AIC(modelo_glm), AIC(modelo_glmm)),
+  logLik = c(logLik(modelo_glm), logLik(modelo_glmm))
+) %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+knitr::kable(model_comp)
+
+```
+
+```{r}
+#| label: tbl-glmm-logistic
+#| tbl-cap: "Proporción de variación entre islas (ICC aprox.)"
+
+# ICC aproximado para GLMM (logistic)
+var_island <- as.data.frame(VarCorr(modelo_glmm))$vcov[1]
+icc <- round(var_island / (var_island + (pi^2 / 3)), 3)
+
+tibble(stat = c("ICC (aprox.)"), value = c(icc)) %>% knitr::kable()
+
+```
