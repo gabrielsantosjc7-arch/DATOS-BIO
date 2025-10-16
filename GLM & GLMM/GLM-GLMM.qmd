@@ -44,3 +44,17 @@ glm_coef <- broom::tidy(modelo_glm, conf.int = TRUE) %>%
 knitr::kable(glm_coef)
 
 ```
+```{r}
+#| label: tbl-glm-summary
+#| warning: false
+#| tbl-cap: "Resumen del ajuste GLM (desviancias, AIC, logLik)"
+
+# Resumen del ajuste GLM: desviancias, AIC, logLik
+glm_glance <- broom::glance(modelo_glm) %>%
+  tibble::as_tibble() %>%
+  select(null.deviance, df.null, deviance, df.residual, AIC, logLik) %>%
+  mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(glm_glance)
+
+```
