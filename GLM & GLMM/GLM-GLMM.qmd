@@ -133,3 +133,43 @@ knitr::kable(preds)
 
 ```
 
+## Ajuste GLMM (efecto aleatorio por isla)
+
+```{r}
+#| label: tbl-glmm-fit
+#| tbl-cap: efectos fijos (coeficientes y OR)
+#| warning: false
+
+
+# Ajuste GLMM (binomial) con intercepto aleatorio por isla
+modelo_glmm <- glmer(long_bill ~ flipper_length_mm + species + (1 | island),
+            data = df_glm,
+            family = binomial(link = "logit"),
+            control = glmerControl(optimizer = "bobyqa", 
+                        optCtrl = list(maxfun = 200000)))
+
+# Coeficientes fijados (fixed effects) y efecto aleatorio (varianza)
+glmm_tidy <- broom.mixed::tidy(modelo_glmm, effects = "fixed", 
+          conf.int = TRUE) %>%
+  mutate(
+    estimate = round(estimate, 4),
+    OR = round(exp(estimate), 3),
+    p.value = ifelse(p.value < 0.001, "< 0.001", round(p.value, 3))
+  )
+
+rand_eff <- as.data.frame(VarCorr(modelo_glmm))
+rand_eff_tbl <- tibble(
+  term = rand_eff$grp,
+  variance = round(rand_eff$vcov, 4)
+)
+
+knitr::kable(glmm_tidy)
+
+```
+
+```{r}
+#| label: tbl-glmm-var-fit
+#| tbl-cap: Varianza del efecto aleatorio (island)
+
+knitr::kable(rand_eff_tbl)
+```
