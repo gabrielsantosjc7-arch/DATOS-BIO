@@ -1,0 +1,901 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  spanish,
+  11pt,
+  a4paper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+  \setmainfont[]{Times New Roman}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+\ifPDFTeX
+\else
+\babelfont{rm}[]{Times New Roman}
+\fi
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\usepackage[hidelinks]{hyperref}
+\KOMAoption{captions}{tableheading}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Tabla de contenidos}
+\else
+  \newcommand\contentsname{Tabla de contenidos}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{Listado de Figuras}
+\else
+  \newcommand\listfigurename{Listado de Figuras}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{Listado de Tablas}
+\else
+  \newcommand\listtablename{Listado de Tablas}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figura}
+\else
+  \newcommand\figurename{Figura}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Tabla}
+\else
+  \newcommand\tablename{Tabla}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listado}
+\newcommand*\listoflistings{\listof{codelisting}{Listado de Listados}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={GLM-GLMM},
+  pdfauthor={Santos G},
+  pdflang={es},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\title{GLM-GLMM}
+\author{Santos G}
+\date{}
+\begin{document}
+\maketitle
+
+\renewcommand*\contentsname{Tabla de contenidos}
+{
+\hypersetup{linkcolor=}
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+
+\section{Contexto de proyecto}\label{contexto-de-proyecto}
+
+En esta sección se introducen los Modelos Lineales Generalizados (GLM) y
+Modelos Lineales Mixtos Generalizados (GLMM) aplicados a datos
+ecológicos. A diferencia de los modelos lineales simples o múltiples,
+los GLM permiten modelar variables de respuesta que no siguen una
+distribución normal, como conteos (Poisson o binomial negativa),
+proporciones o datos binarios (presencia/ausencia). Los GLMM extienden
+aún más este marco al incorporar efectos aleatorios, útiles para
+controlar la variabilidad entre grupos o unidades experimentales (por
+ejemplo, sitios de muestreo, individuos o años).
+
+\section{Carga de librerías y
+dataset}\label{carga-de-libreruxedas-y-dataset}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Librerías necesarias (carga al inicio del documento)}
+\FunctionTok{library}\NormalTok{(tidyverse)     }\CommentTok{\# manipulación y ggplot2}
+\FunctionTok{library}\NormalTok{(broom)         }\CommentTok{\# tidy(), glance()}
+\FunctionTok{library}\NormalTok{(knitr)         }\CommentTok{\# kable()}
+\FunctionTok{library}\NormalTok{(lme4)          }\CommentTok{\# glmer()}
+\FunctionTok{library}\NormalTok{(broom.mixed)   }\CommentTok{\# tidy() para modelos mixtos}
+\FunctionTok{library}\NormalTok{(pROC)          }\CommentTok{\# AUC / ROC (diagnóstico)}
+\FunctionTok{library}\NormalTok{(janitor)       }\CommentTok{\# Clean names}
+\FunctionTok{library}\NormalTok{(palmerpenguins) }\CommentTok{\# dataset de pingüinos}
+
+\CommentTok{\# Cargar dataset}
+\NormalTok{df\_raw }\OtherTok{\textless{}{-}}\NormalTok{ penguins }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as\_tibble}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Preparación de datos (crear variable binaria y
+limpiar)}\label{preparaciuxf3n-de-datos-crear-variable-binaria-y-limpiar}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Crear variable binaria: "pico largo" (ejemplo umbral = 45 mm)}
+\NormalTok{df\_glm }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  janitor}\SpecialCharTok{::}\FunctionTok{clean\_names}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{long\_bill =} \FunctionTok{case\_when}\NormalTok{(}
+      \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(bill\_length\_mm) }\SpecialCharTok{\&}\NormalTok{ bill\_length\_mm }\SpecialCharTok{\textgreater{}} \DecValTok{45} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+      \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(bill\_length\_mm) }\SpecialCharTok{\&}\NormalTok{ bill\_length\_mm }\SpecialCharTok{\textless{}=} \DecValTok{45} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    )}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(species, island, flipper\_length\_mm, bill\_length\_mm, long\_bill) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{drop\_na}\NormalTok{(flipper\_length\_mm, long\_bill) }\CommentTok{\# quitar filas sin predictor o respuesta}
+
+\CommentTok{\# Comprobar distribución de la variable binaria}
+\NormalTok{df\_glm }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{count}\NormalTok{(long\_bill) }\SpecialCharTok{\%\textgreater{}\%} 
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rr@{}}
+
+\caption{\label{tbl-glm-prep}Distribución de la variable respuesta
+(long\_bill)}
+
+\tabularnewline
+
+\toprule\noalign{}
+long\_bill & n \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 177 \\
+1 & 165 \\
+
+\end{longtable}
+
+Se observa que 177 pingüinos (≈52\%) tienen pico corto o normal (≤45
+mm), mientras que 165 pingüinos (≈48\%) tienen pico largo
+(\textgreater45 mm) (ver Tabla~\ref{tbl-glm-prep}). Es decir, la
+variable respuesta está balanceada --- hay una proporción similar de
+casos ``0'' y ``1''. Esto es excelente, porque un modelo logístico
+funciona mejor cuando las clases no están demasiado desbalanceadas (por
+ejemplo, 90\% / 10\%).
+
+En términos biológicos, esto indica que dentro del conjunto de datos de
+pingüinos del archipiélago Palmer, las longitudes del pico se
+distribuyen de forma relativamente equilibrada alrededor del umbral de
+45 mm. Por tanto, existen proporciones comparables de individuos con
+picos largos y cortos, lo cual permitirá explorar si esta característica
+está asociada a diferencias morfológicas (como el largo del aleta) o
+taxonómicas (como la especie).
+
+\section{Ajuste del GLM binomial
+(logit)}\label{ajuste-del-glm-binomial-logit}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Ajuste GLM binomial: probabilidad de pico largo según flipper\_length y especie}
+\NormalTok{modelo\_glm }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(long\_bill }\SpecialCharTok{\textasciitilde{}}\NormalTok{ flipper\_length\_mm }\SpecialCharTok{+}\NormalTok{ species,}
+                  \AttributeTok{data =}\NormalTok{ df\_glm,}
+                  \AttributeTok{family =} \FunctionTok{binomial}\NormalTok{(}\AttributeTok{link =} \StringTok{"logit"}\NormalTok{))}
+
+\CommentTok{\# Tabla de coeficientes y OR (odds ratios)}
+\NormalTok{glm\_coef }\OtherTok{\textless{}{-}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(modelo\_glm, }\AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{estimate =} \FunctionTok{round}\NormalTok{(estimate, }\DecValTok{4}\NormalTok{),}
+    \AttributeTok{std.error =} \FunctionTok{round}\NormalTok{(std.error, }\DecValTok{4}\NormalTok{),}
+    \AttributeTok{p.value =} \FunctionTok{ifelse}\NormalTok{(p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{} 0.001"}\NormalTok{, }\FunctionTok{round}\NormalTok{(p.value, }\DecValTok{3}\NormalTok{)),}
+    \AttributeTok{OR =} \FunctionTok{round}\NormalTok{(}\FunctionTok{exp}\NormalTok{(estimate), }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{OR\_lwr =} \FunctionTok{round}\NormalTok{(}\FunctionTok{exp}\NormalTok{(conf.low), }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{OR\_upr =} \FunctionTok{round}\NormalTok{(}\FunctionTok{exp}\NormalTok{(conf.high), }\DecValTok{3}\NormalTok{)}
+\NormalTok{  )}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(glm\_coef)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.1748}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0874}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0971}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0971}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0777}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.1165}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.1068}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0777}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0777}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 18\tabcolsep) * \real{0.0874}}@{}}
+
+\caption{\label{tbl-glm-fit}Coeficientes (logit) y Odds Ratios (OR)}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+OR
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+OR\_lwr
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+OR\_upr
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+(Intercept) & -33.5120 & 7.1452 & -4.690167 & \textless{} 0.001 &
+-48.3808699 & -20.223668 & 0.000 & 0.000 & 0.000 \\
+flipper\_length\_mm & 0.1533 & 0.0363 & 4.226267 & \textless{} 0.001 &
+0.0854135 & 0.228350 & 1.166 & 1.089 & 1.257 \\
+speciesChinstrap & 6.2646 & 0.7741 & 8.092529 & \textless{} 0.001 &
+4.9003855 & 7.986774 & 525.631 & 134.342 & 2941.792 \\
+speciesGentoo & 1.9542 & 0.9068 & 2.154914 & 0.031 & 0.2595677 &
+3.869489 & 7.058 & 1.296 & 47.918 \\
+
+\end{longtable}
+
+\begin{itemize}
+\item
+  \textbf{Intercepto (β₀ = -33.51, p \textless{} 0.001):}\\
+  Representa el log-odds de tener un pico largo para un pingüino
+  \emph{Adelie} (grupo de referencia) con una longitud de ala igual a 0
+  mm. Aunque no tiene un significado biológico directo, es necesario
+  para definir la ecuación logística del modelo.
+\item
+  \textbf{Longitud del ala (β₁ = 0.153, p \textless{} 0.001):}\\
+  El efecto es positivo y altamente significativo, lo que indica que a
+  medida que aumenta la longitud del ala, también aumenta la
+  probabilidad de tener un pico largo. En términos de odds ratio (OR =
+  1.166), por cada aumento de 1 mm en la longitud del ala, las
+  probabilidades de tener un pico largo aumentan en aproximadamente 16.6
+  \%, manteniendo constante la especie.
+\item
+  \textbf{Especie Chinstrap (β = 6.26, p \textless{} 0.001):}\\
+  En comparación con los pingüinos \emph{Adelie}, los \emph{Chinstrap}
+  tienen odds 525 veces mayores de presentar un pico largo. Esto sugiere
+  una diferencia morfológica marcada entre especies.
+\item
+  \textbf{Especie Gentoo (β = 1.95, p = 0.031):}\\
+  Los \emph{Gentoo} también tienen mayor probabilidad de presentar picos
+  largos respecto a los \emph{Adelie}, con odds 7 veces mayores, aunque
+  el efecto es más moderado que en \emph{Chinstrap}.
+\end{itemize}
+
+En conjunto, el modelo logístico indica que tanto el tamaño corporal
+(longitud del ala) como la especie son predictores significativos de la
+probabilidad de poseer un pico largo. Las especies \emph{Chinstrap} y
+\emph{Gentoo} muestran mayor probabilidad de presentar picos largos en
+comparación con \emph{Adelie}, lo que refleja diferencias alométricas y
+adaptativas relacionadas con el hábitat y tipo de dieta. La longitud del
+ala, a su vez, actúa como indicador de tamaño corporal general,
+reforzando la relación alométrica entre las dimensiones corporales (ver
+Tabla~\ref{tbl-glm-fit}).
+
+\section{Resumen del ajuste y
+verosimilitud}\label{resumen-del-ajuste-y-verosimilitud}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Resumen del ajuste GLM: desviancias, AIC, logLik}
+\NormalTok{glm\_glance }\OtherTok{\textless{}{-}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(modelo\_glm) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tibble}\SpecialCharTok{::}\FunctionTok{as\_tibble}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(null.deviance, df.null, deviance, df.residual, AIC, logLik) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(glm\_glance)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrrrrr@{}}
+
+\caption{\label{tbl-glm-summary}Resumen del ajuste GLM (desviancias,
+AIC, logLik)}
+
+\tabularnewline
+
+\toprule\noalign{}
+null.deviance & df.null & deviance & df.residual & AIC & logLik \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+473.692 & 341 & 166.918 & 338 & 174.918 & -83.459 \\
+
+\end{longtable}
+
+\begin{itemize}
+\item
+  \textbf{Comparación de desviancias:} La \emph{null deviance} es 473.7
+  y la \emph{residual deviance} baja a 166.9. Esa gran reducción (más de
+  300 unidades) indica que el modelo con predictores mejora muchísimo
+  respecto a un modelo sin ellos. En otras palabras,
+  \emph{flipper\_length\_mm} y \emph{species} aportan información muy
+  significativa para explicar si un pingüino tiene un pico largo
+  (\textgreater45 mm).
+\item
+  \textbf{AIC (174.918):} Este valor por sí solo no tiene un significado
+  absoluto, pero sí se usa para comparar modelos alternativos (por
+  ejemplo, con o sin alguna variable). Si probaras un modelo solo con
+  \emph{flipper\_length\_mm}, su AIC sería más alto, lo que confirmaría
+  que incluir \emph{species} mejora el ajuste.
+\item
+  \textbf{LogLik (-83.459):} Este valor está relacionado con la
+  verosimilitud cuanto más alto (menos negativo), mejor el ajuste. A
+  medida que agregas predictores relevantes, el logLik debería aumentar.
+\end{itemize}
+
+En conjunto el modelo logra una reducción drástica de la deviance (de
+473 a 167), lo cual demuestra que el modelo predice bastante bien la
+probabilidad de ``pico largo''. La combinación de
+\emph{flipper\_length\_mm} (una medida continua) y \emph{species}
+(categoría) explica la mayor parte de la variación observada (ver
+Tabla~\ref{tbl-glm-summary}).
+
+\section{Diagnósticos GLM: overdispersion y AUC /
+performance}\label{diagnuxf3sticos-glm-overdispersion-y-auc-performance}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Overdispersion:ratio deviance/df.residual}
+
+\NormalTok{dispersion }\OtherTok{\textless{}{-}} \FunctionTok{with}\NormalTok{(}\FunctionTok{summary}\NormalTok{(modelo\_glm), deviance }\SpecialCharTok{/}\NormalTok{ df.residual)}
+
+\CommentTok{\# Predicciones y matriz de confusión simple (umbral 0.5)}
+\NormalTok{df\_glm }\OtherTok{\textless{}{-}}\NormalTok{ df\_glm }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{fitted\_prob =} \FunctionTok{predict}\NormalTok{(modelo\_glm, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{),}
+    \AttributeTok{fitted\_class =} \FunctionTok{ifelse}\NormalTok{(fitted\_prob }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{  )}
+
+\NormalTok{conf\_tab }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(}\AttributeTok{Actual =}\NormalTok{ df\_glm}\SpecialCharTok{$}\NormalTok{long\_bill, }\AttributeTok{Predicho =}\NormalTok{ df\_glm}\SpecialCharTok{$}\NormalTok{fitted\_class)}
+\NormalTok{accuracy }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(}\FunctionTok{diag}\NormalTok{(conf\_tab)) }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(conf\_tab)}
+
+\CommentTok{\# AUC / ROC}
+\NormalTok{roc\_obj }\OtherTok{\textless{}{-}}\NormalTok{ pROC}\SpecialCharTok{::}\FunctionTok{roc}\NormalTok{(df\_glm}\SpecialCharTok{$}\NormalTok{long\_bill, df\_glm}\SpecialCharTok{$}\NormalTok{fitted\_prob, }\AttributeTok{quiet =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{auc\_val }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(pROC}\SpecialCharTok{::}\FunctionTok{auc}\NormalTok{(roc\_obj), }\DecValTok{3}\NormalTok{)}
+
+\CommentTok{\# Tablas resumen}
+\NormalTok{diag\_table }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{measure =} \FunctionTok{c}\NormalTok{(}\StringTok{"Dispersion (deviance/df)"}\NormalTok{, }\StringTok{"Accuracy (threshold 0.5)"}\NormalTok{, }\StringTok{"AUC"}\NormalTok{),}
+  \AttributeTok{value =} \FunctionTok{c}\NormalTok{(}\FunctionTok{round}\NormalTok{(dispersion, }\DecValTok{3}\NormalTok{), }\FunctionTok{round}\NormalTok{(accuracy, }\DecValTok{3}\NormalTok{), auc\_val)}
+\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(diag\_table)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+
+\caption{\label{tbl-glm-diagnostics}Diagnósticos GLM: overdispersion,
+accuracy y AUC}
+
+\tabularnewline
+
+\toprule\noalign{}
+measure & value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Dispersion (deviance/df) & 0.494 \\
+Accuracy (threshold 0.5) & 0.904 \\
+AUC & 0.958 \\
+
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\FunctionTok{as.data.frame}\NormalTok{(conf\_tab))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llr@{}}
+
+\caption{\label{tbl-glm-confusion}Matriz de confusión (GLM, umbral 0.5)}
+
+\tabularnewline
+
+\toprule\noalign{}
+Actual & Predicho & Freq \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 0 & 148 \\
+1 & 0 & 4 \\
+0 & 1 & 29 \\
+1 & 1 & 161 \\
+
+\end{longtable}
+
+Se muestra los indicadores de desempeño del modelo logístico ajustado.
+La razón de dispersión (0.494) indica ausencia de sobre-dispersión, lo
+que confirma que el modelo binomial es apropiado. La precisión del
+90.4\% y el valor AUC de 0.958 evidencian una alta capacidad predictiva
+y discriminatoria del modelo, reflejando que la longitud de las aletas y
+la especie son buenos predictores de la probabilidad de presentar un
+pico largo (ver Tabla~\ref{tbl-glm-diagnostics}) . Además se observa que
+el número de aciertos fue sustancialmente mayor que los errores,
+reforzando la validez del modelo (ver Tabla~\ref{tbl-glm-confusion}) .
+
+\section{Predicciones: tabla presentable y ejemplo de
+interpretación}\label{predicciones-tabla-presentable-y-ejemplo-de-interpretaciuxf3n}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Predicción para valores representativos de flipper por especie}
+\NormalTok{newdata }\OtherTok{\textless{}{-}} \FunctionTok{expand.grid}\NormalTok{(}
+  \AttributeTok{flipper\_length\_mm =} \FunctionTok{c}\NormalTok{(}\DecValTok{170}\NormalTok{, }\DecValTok{190}\NormalTok{, }\DecValTok{210}\NormalTok{),}
+  \AttributeTok{species =} \FunctionTok{unique}\NormalTok{(df\_glm}\SpecialCharTok{$}\NormalTok{species)}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{as\_tibble}\NormalTok{()}
+
+\NormalTok{preds }\OtherTok{\textless{}{-}}\NormalTok{ newdata }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{fit\_prob =} \FunctionTok{predict}\NormalTok{(modelo\_glm, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{),}
+    \AttributeTok{lwr =} \ConstantTok{NA\_real\_}\NormalTok{, }\AttributeTok{upr =} \ConstantTok{NA\_real\_}
+\NormalTok{  )}
+
+\CommentTok{\# obtener IC por link (logit) y transformar a prob (opcional)}
+\NormalTok{pred\_link }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_glm, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{se.fit =} \ConstantTok{TRUE}\NormalTok{, }
+                     \AttributeTok{type =} \StringTok{"link"}\NormalTok{)}
+\NormalTok{crit }\OtherTok{\textless{}{-}} \FunctionTok{qnorm}\NormalTok{(}\FloatTok{0.975}\NormalTok{)}
+\NormalTok{preds }\OtherTok{\textless{}{-}}\NormalTok{ preds }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{fit =} \FunctionTok{round}\NormalTok{(}\FunctionTok{plogis}\NormalTok{(pred\_link}\SpecialCharTok{$}\NormalTok{fit), }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{lwr =} \FunctionTok{round}\NormalTok{(}\FunctionTok{plogis}\NormalTok{(pred\_link}\SpecialCharTok{$}\NormalTok{fit }\SpecialCharTok{{-}}\NormalTok{ crit }\SpecialCharTok{*}\NormalTok{ pred\_link}\SpecialCharTok{$}\NormalTok{se.fit), }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{upr =} \FunctionTok{round}\NormalTok{(}\FunctionTok{plogis}\NormalTok{(pred\_link}\SpecialCharTok{$}\NormalTok{fit }\SpecialCharTok{+}\NormalTok{ crit }\SpecialCharTok{*}\NormalTok{ pred\_link}\SpecialCharTok{$}\NormalTok{se.fit), }\DecValTok{3}\NormalTok{)}
+\NormalTok{  )}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(preds)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rlrrrr@{}}
+
+\caption{\label{tbl-glm_pred_table}Predicciones (probabilidad de pico
+largo) por flipper\_length y especie}
+
+\tabularnewline
+
+\toprule\noalign{}
+flipper\_length\_mm & species & fit\_prob & lwr & upr & fit \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+170 & Adelie & 0.0005840 & 0.000 & 0.005 & 0.001 \\
+190 & Adelie & 0.0123920 & 0.004 & 0.042 & 0.012 \\
+210 & Adelie & 0.2122326 & 0.056 & 0.552 & 0.212 \\
+170 & Gentoo & 0.0041077 & 0.000 & 0.089 & 0.004 \\
+190 & Gentoo & 0.0813552 & 0.015 & 0.341 & 0.081 \\
+210 & Gentoo & 0.6553492 & 0.522 & 0.768 & 0.655 \\
+170 & Chinstrap & 0.2349829 & 0.053 & 0.628 & 0.235 \\
+190 & Chinstrap & 0.8683359 & 0.731 & 0.941 & 0.868 \\
+210 & Chinstrap & 0.9929876 & 0.965 & 0.999 & 0.993 \\
+
+\end{longtable}
+
+Se presentan las probabilidades predichas de presentar un pico largo en
+función de la longitud de las aletas y la especie. Se observa una
+relación positiva: al aumentar la longitud de las aletas, la
+probabilidad de tener un pico largo también aumenta. Sin embargo, esta
+relación varía entre especies. En particular, los pingüinos
+\emph{Chinstrap} presentan la mayor probabilidad de tener picos largos,
+seguidos por \emph{Gentoo}, mientras que \emph{Adelie} muestra
+consistentemente bajas probabilidades. Estos resultados confirman que
+tanto el tamaño corporal como la especie influyen significativamente en
+la morfología del pico (ver Tabla~\ref{tbl-glm_pred_table}) .
+
+\section{Ajuste GLMM (efecto aleatorio por
+isla)}\label{ajuste-glmm-efecto-aleatorio-por-isla}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Ajuste GLMM (binomial) con intercepto aleatorio por isla}
+\NormalTok{modelo\_glmm }\OtherTok{\textless{}{-}} \FunctionTok{glmer}\NormalTok{(long\_bill }\SpecialCharTok{\textasciitilde{}}\NormalTok{ flipper\_length\_mm }\SpecialCharTok{+}\NormalTok{ species }\SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ island),}
+            \AttributeTok{data =}\NormalTok{ df\_glm,}
+            \AttributeTok{family =} \FunctionTok{binomial}\NormalTok{(}\AttributeTok{link =} \StringTok{"logit"}\NormalTok{),}
+            \AttributeTok{control =} \FunctionTok{glmerControl}\NormalTok{(}\AttributeTok{optimizer =} \StringTok{"bobyqa"}\NormalTok{, }
+                        \AttributeTok{optCtrl =} \FunctionTok{list}\NormalTok{(}\AttributeTok{maxfun =} \DecValTok{200000}\NormalTok{)))}
+
+\CommentTok{\# Coeficientes fijados (fixed effects) y efecto aleatorio (varianza)}
+\NormalTok{glmm\_tidy }\OtherTok{\textless{}{-}}\NormalTok{ broom.mixed}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(modelo\_glmm, }\AttributeTok{effects =} \StringTok{"fixed"}\NormalTok{, }
+          \AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{estimate =} \FunctionTok{round}\NormalTok{(estimate, }\DecValTok{4}\NormalTok{),}
+    \AttributeTok{OR =} \FunctionTok{round}\NormalTok{(}\FunctionTok{exp}\NormalTok{(estimate), }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{p.value =} \FunctionTok{ifelse}\NormalTok{(p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{} 0.001"}\NormalTok{, }\FunctionTok{round}\NormalTok{(p.value, }\DecValTok{3}\NormalTok{))}
+\NormalTok{  )}
+
+\NormalTok{rand\_eff }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{VarCorr}\NormalTok{(modelo\_glmm))}
+\NormalTok{rand\_eff\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{term =}\NormalTok{ rand\_eff}\SpecialCharTok{$}\NormalTok{grp,}
+  \AttributeTok{variance =} \FunctionTok{round}\NormalTok{(rand\_eff}\SpecialCharTok{$}\NormalTok{vcov, }\DecValTok{4}\NormalTok{)}
+\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(glmm\_tidy)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0753}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1935}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0968}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1075}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1075}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0860}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1183}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0860}}@{}}
+
+\caption{\label{tbl-glmm-fit}efectos fijos (coeficientes y OR)}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+effect
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+OR
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+fixed & (Intercept) & -33.5120 & 7.2003934 & -4.654188 & \textless{}
+0.001 & -47.6244935 & -19.399470 & 0.000 \\
+fixed & flipper\_length\_mm & 0.1533 & 0.0365621 & 4.193833 &
+\textless{} 0.001 & 0.0816750 & 0.224996 & 1.166 \\
+fixed & speciesChinstrap & 6.2646 & 0.7747393 & 8.086017 & \textless{}
+0.001 & 4.7460947 & 7.783017 & 525.631 \\
+fixed & speciesGentoo & 1.9542 & 0.9102029 & 2.146946 & 0.032 &
+0.1701916 & 3.738122 & 7.058 \\
+
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(rand\_eff\_tbl)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+
+\caption{\label{tbl-glmm-var-fit}Varianza del efecto aleatorio (island)}
+
+\tabularnewline
+
+\toprule\noalign{}
+term & variance \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+island & 0 \\
+
+\end{longtable}
+
+El modelo mixto (GLMM) que incluyó un intercepto aleatorio por isla no
+mostró variación atribuible a este factor (varianza ≈ 0) (ver
+Tabla~\ref{tbl-glmm-var-fit}), lo que indica que la probabilidad de
+presentar un pico largo no difiere significativamente entre islas.
+
+En cuanto a los efectos fijos ver (Tabla~\ref{tbl-glmm-fit}) , todos
+resultaron estadísticamente significativos. La longitud de las aletas
+tuvo un efecto positivo sobre la probabilidad de presentar un pico
+largo: por cada milímetro adicional en la longitud del \emph{flipper},
+las probabilidades de tener un pico largo aumentan aproximadamente un
+16.6\% (OR = 1.17; p \textless{} 0.001).
+
+Asimismo, se observaron diferencias claras entre especies. Los pingüinos
+\emph{Chinstrap} mostraron una probabilidad de presentar pico largo más
+de 500 veces superior a la de los \emph{Adelie} (OR = 525.6; p
+\textless{} 0.001), mientras que los \emph{Gentoo} presentaron una
+probabilidad aproximadamente 7 veces mayor (OR = 7.06; p = 0.032).
+
+En conjunto, estos resultados sugieren que el tamaño de las aletas es un
+predictor importante de la presencia de picos largos y que existen
+diferencias marcadas entre especies, aunque no entre islas.
+
+\section{Diagnóstico GLMM y comparación con
+GLM}\label{diagnuxf3stico-glmm-y-comparaciuxf3n-con-glm}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Extract AIC and logLik for comparison}
+\NormalTok{model\_comp }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{model =} \FunctionTok{c}\NormalTok{(}\StringTok{"GLM"}\NormalTok{, }\StringTok{"GLMM"}\NormalTok{),}
+  \AttributeTok{AIC =} \FunctionTok{c}\NormalTok{(}\FunctionTok{AIC}\NormalTok{(modelo\_glm), }\FunctionTok{AIC}\NormalTok{(modelo\_glmm)),}
+  \AttributeTok{logLik =} \FunctionTok{c}\NormalTok{(}\FunctionTok{logLik}\NormalTok{(modelo\_glm), }\FunctionTok{logLik}\NormalTok{(modelo\_glmm))}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(., }\DecValTok{3}\NormalTok{)))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(model\_comp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrr@{}}
+
+\caption{\label{tbl-glmm-diag-compare}Comparación AIC/logLik entre GLM y
+GLMM}
+
+\tabularnewline
+
+\toprule\noalign{}
+model & AIC & logLik \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+GLM & 174.918 & -83.459 \\
+GLMM & 176.918 & -83.459 \\
+
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# ICC aproximado para GLMM (logistic)}
+\NormalTok{var\_island }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{VarCorr}\NormalTok{(modelo\_glmm))}\SpecialCharTok{$}\NormalTok{vcov[}\DecValTok{1}\NormalTok{]}
+\NormalTok{icc }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(var\_island }\SpecialCharTok{/}\NormalTok{ (var\_island }\SpecialCharTok{+}\NormalTok{ (pi}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{/} \DecValTok{3}\NormalTok{)), }\DecValTok{3}\NormalTok{)}
+
+\FunctionTok{tibble}\NormalTok{(}\AttributeTok{stat =} \FunctionTok{c}\NormalTok{(}\StringTok{"ICC (aprox.)"}\NormalTok{), }\AttributeTok{value =} \FunctionTok{c}\NormalTok{(icc)) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lr@{}}
+
+\caption{\label{tbl-glmm-logistic}Proporción de variación entre islas
+(ICC aprox.)}
+
+\tabularnewline
+
+\toprule\noalign{}
+stat & value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+ICC (aprox.) & 0 \\
+
+\end{longtable}
+
+La comparación entre el modelo lineal generalizado (GLM) y el modelo
+mixto (GLMM) mostró valores prácticamente idénticos de log-verosimilitud
+(-83.46), con un AIC ligeramente mayor en el GLMM (176.9) respecto al
+GLM (174.9) (ver Tabla~\ref{tbl-glmm-diag-compare}).
+
+Este resultado indica que la incorporación del efecto aleatorio por isla
+no mejora el ajuste del modelo, sino que introduce un parámetro
+adicional sin aportar ganancia en verosimilitud. Por tanto, el modelo
+más parsimonioso y adecuado es el GLM simple, que explica la
+variabilidad en la probabilidad de presentar pico largo sin necesidad de
+considerar diferencias entre islas.
+
+En concordancia, el coeficiente de correlación intraclase (ICC)
+calculado para el GLMM fue ≈ 0 (ver Tabla~\ref{tbl-glmm-logistic}), lo
+que confirma que no existe una proporción relevante de la variación
+atribuible al nivel de agrupamiento ``isla''.
+
+En resumen, tanto el análisis del AIC como el ICC sugieren que el efecto
+del contexto espacial (isla) es despreciable, y que la variabilidad en
+la presencia de picos largos está determinada principalmente por la
+especie y la longitud del flipper.
+
+\section{Conclusiones y recomendaciones prácticas (GLM /
+GLMM)}\label{conclusiones-y-recomendaciones-pruxe1cticas-glm-glmm}
+
+El análisis realizado con el conjunto de datos de pingüinos de Palmer
+permitió modelar la probabilidad de que un individuo presente un pico
+largo (\textgreater{} 45 mm) en función de variables morfométricas y
+taxonómicas, aplicando tanto modelos lineales generalizados (GLM) como
+modelos mixtos (GLMM).
+
+Los resultados del modelo GLM binomial con enlace logit mostraron que la
+longitud del flipper es un predictor significativo: por cada milímetro
+adicional, las probabilidades de tener un pico largo aumentan
+aproximadamente un 16--17 \% (OR ≈ 1.17). Asimismo, se detectaron
+diferencias claras entre especies: \emph{Chinstrap} es la especie con
+mayor probabilidad de presentar picos largos, seguida por \emph{Gentoo},
+mientras que \emph{Adelie} presenta la menor.
+
+\hfill\break
+El modelo demostró un ajuste muy adecuado, sin indicios de
+sobre-dispersión (dispersion ≈ 0.49), con una exactitud de clasificación
+del 90 \% y una curva ROC de AUC = 0.96, lo que evidencia una excelente
+capacidad predictiva y discriminante.
+
+Por otro lado, el modelo mixto (GLMM) que incorporó un intercepto
+aleatorio por isla no mejoró sustancialmente el ajuste (AIC ≈ 176.9
+frente a 174.9 del GLM) y presentó una varianza del efecto aleatorio
+prácticamente nula (0). El ICC ≈ 0 confirmó que las diferencias entre
+islas no aportan variabilidad adicional al fenómeno modelado. En
+consecuencia, el GLMM no ofrece ventajas sobre el GLM en este contexto,
+y el modelo simple resulta más parsimonioso y eficiente.
+
+
+
+
+\end{document}

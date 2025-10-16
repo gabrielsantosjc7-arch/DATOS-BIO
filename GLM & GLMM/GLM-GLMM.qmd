@@ -1,0 +1,21 @@
+```{r}
+#| label: tbl-glm-prep
+#| tbl-cap: "Distribución de la variable respuesta (long_bill)"
+
+# Crear variable binaria: "pico largo" (ejemplo umbral = 45 mm)
+df_glm <- df %>%
+  janitor::clean_names() %>%
+  mutate(
+    long_bill = case_when(
+      !is.na(bill_length_mm) & bill_length_mm > 45 ~ 1,
+      !is.na(bill_length_mm) & bill_length_mm <= 45 ~ 0,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  select(species, island, flipper_length_mm, bill_length_mm, long_bill) %>%
+  drop_na(flipper_length_mm, long_bill) # quitar filas sin predictor o respuesta
+
+# Comprobar distribución de la variable binaria
+df_glm %>% 
+  count(long_bill) %>% 
+  knitr::kable()
