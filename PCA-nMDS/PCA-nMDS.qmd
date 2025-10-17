@@ -79,3 +79,89 @@ ggcorrplot(
   ggtheme = ggplot2::theme_minimal()
 )
 ```
+## Ejecutar PCA con `prcomp()` y extraer resultados
+
+```{r}
+#| label: tbl-pca-fit
+#| tbl-cap: "Desviaciones, varianza y proporción por componente"
+
+pca_fit <- prcomp(df_pca %>% select(where(is.numeric)), scale. = TRUE, 
+                  center = TRUE)
+
+# Varianza explicada
+pca_var <- pca_fit$sdev^2
+pca_var_prop <- pca_var / sum(pca_var)
+
+pca_summary <- tibble(
+  PC = paste0("PC", seq_along(pca_var)),
+  sdev = round(pca_fit$sdev, 3),
+  variance = round(pca_var, 3),
+  prop.var = round(pca_var_prop, 3),
+  cum.var = round(cumsum(pca_var_prop), 3)
+)
+
+knitr::kable(pca_summary)
+
+```
+
+## Gráficos: screeplot y biplot (scores + loadings)
+
+```{r}
+#| label: fig-pca-scree
+#| fig-cap: "Screeplot PCA"
+
+# Screeplot
+scree_df <- pca_summary
+ggplot(scree_df, aes(x = as.numeric(gsub("PC","",PC)), y = prop.var)) +
+  geom_col() +
+  geom_line(aes(y = cum.var), color = "blue") +
+  geom_point(aes(y = cum.var), color = "blue") +
+  labs(x = "Componente principal", y = "Proporción de varianza explicada",
+       title = "Screeplot PCA") +
+  theme_minimal()
+
+```
+```{r}
+#| label: tbl-pca-loadings
+#| tbl-cap: "Contribución de las variables a los componentes principales"
+#| warning: false
+#| message: false
+
+# Cargas (loadings) de cada variable en las primeras dos componentes
+loadings_tbl <- as_tibble(pca_fit$rotation[, 1:2], rownames = "Variable") %>%
+  rename(PC1 = PC1, PC2 = PC2) %>%
+  mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(loadings_tbl)
+
+```{r}
+#| label: fig-pca-biplot
+#| fig-cap: "Biplot PCA: relación entre variables y componentes principales"
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 6
+
+# Biplot de variables
+biplot_data <- as_tibble(pca_fit$x[, 1:2]) %>%
+  mutate(species = df_pca$species)
+
+# vectores de las variables (loadings)
+loadings <- as.data.frame(pca_fit$rotation[, 1:2])
+
+ggplot(biplot_data, aes(PC1, PC2, color = species)) +
+  geom_point(alpha = 0.7, size = 2) +
+  geom_segment(data = loadings,
+               aes(x = 0, y = 0, xend = PC1 * 3, yend = PC2 * 3),
+               arrow = arrow(length = unit(0.25, "cm")), 
+               color = "black") +
+  geom_text_repel(data = loadings,
+                  aes(x = PC1 * 3.2, y = PC2 * 3.2, label = rownames(loadings)),
+                  color = "black", size = 3.5) +
+  labs(title = "Biplot PCA: especies y variables morfométricas",
+       x = "Componente 1",
+       y = "Componente 2") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
