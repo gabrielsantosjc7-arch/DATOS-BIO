@@ -1,0 +1,81 @@
+# Cargar dataset
+df_raw <- penguins %>% as_tibble()
+```
+## Preparación de datos y verificación de supuestos
+
+```{r}
+#| label: pca_prep
+
+# --- Preparación de datos ---
+df_pca <- df_raw %>%
+  select(species, island, bill_length_mm, bill_depth_mm, 
+         flipper_length_mm, body_mass_g) %>%
+  drop_na()
+```
+
+```{r}
+#| label: tbl-pca-norm
+#| tbl-cap: "Normalidad multivariada (test de Mardia)"
+#| warning: false
+#| message: false
+
+# Test de normalidad multivariada (Mardia)
+mardia_test <- MVN::mvn(
+  data = df_pca[, 3:6],
+  mvn_test = "mardia",     
+  univariate_test = "AD",
+  descriptives = FALSE,
+  tidy = TRUE
+)
+
+norm_tbl <- mardia_test$multivariate_normality %>%
+  dplyr::select(Test, Statistic, p.value, MVN) %>%
+  dplyr::mutate(across(where(is.numeric), round, 3))
+
+
+knitr::kable(norm_tbl)
+```{r}
+#| label: tbl-pca-bartlett-kmo
+#| tbl-cap: "Pruebas de esfericidad y adecuación muestral"
+#| warning: false
+#| message: false
+
+# Esfericidad (Bartlett) y adecuación muestral (KMO)
+
+bart <- psych::cortest.bartlett(cor(df_pca[, 3:6]), n = nrow(df_pca))
+kmo  <- psych::KMO(cor(df_pca[, 3:6]))
+
+sphere_tbl <- tibble(
+  Test = c("Bartlett’s test of sphericity", "Kaiser-Meyer-Olkin (KMO)"),
+  Statistic = c(round(bart$chisq, 3), NA),
+  df = c(bart$df, NA),
+  p_value = c(ifelse(bart$p.value < 0.001, "<0.001", round(bart$p.value, 3)), NA),
+  Measure = c(NA, round(kmo$MSA, 3))
+)
+
+knitr::kable(sphere_tbl)
+```{r}
+#| label: fig-pca-corr
+#| warning: false
+#| message: false
+#| fig-cap: "Matriz de correlaciones entre variables morfométricas (Spearman)"
+#| fig-width: 6
+#| fig-height: 5
+
+# Matriz de correlaciones (ggcorrplot)
+
+cor_mat <- cor(df_pca[, 3:6], method = "spearman", 
+               use = "pairwise.complete.obs")
+
+ggcorrplot(
+  cor_mat, 
+  hc.order = TRUE, 
+  type = "lower", 
+  lab = TRUE,
+  lab_size = 3,
+  method = "square",
+  colors = c("#6D9EC1", "white", "#E46726"),
+  title = "Matriz de correlaciones (Spearman)",
+  ggtheme = ggplot2::theme_minimal()
+)
+```
