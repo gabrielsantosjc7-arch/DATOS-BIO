@@ -165,3 +165,42 @@ ggplot(biplot_data, aes(PC1, PC2, color = species)) +
   theme(legend.position = "bottom")
 
 ```
+# Hellinger transforma abundancias para métodos basados en distancia euclidiana,
+varespec_hel <- decostand(varespec, method = "hellinger")
+```
+
+## Ejecutar NMDS con `metaMDS()` (Bray-Curtis por defecto)
+
+```{r}
+#| label: nmds-stress
+#| warning: false
+#| message: false
+#| results: hide
+
+
+# Ajuste del NMDS (sin mostrar mensajes de ejecución)
+set.seed(42)
+suppressMessages({
+  capture.output({
+    nmds <- metaMDS(
+      varespec_hel,
+      distance = "bray",
+      k = 2,
+      trymax = 100,
+      autotransform = FALSE
+    )
+  })
+})
+```
+
+```{r}
+#| label: fig-nmds-stress
+#| fig-cap: "Curva de ajuste NMDS (stressplot) para evaluar la calidad del ordenamiento"
+#| warning: false
+#| message: false
+#| fig-width: 6
+#| fig-height: 5
+
+# Curva de ajuste (stressplot)
+vegan::stressplot(nmds)
+```

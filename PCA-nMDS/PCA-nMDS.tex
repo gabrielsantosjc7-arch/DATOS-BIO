@@ -233,17 +233,21 @@
 \tableofcontents
 }
 
-\section{Contexto de proyecto (PCA)}\label{contexto-de-proyecto-pca}
+\section{Contexto de proyecto
+(PCA-NMDS)}\label{contexto-de-proyecto-pca-nmds}
 
 El objetivo de este bloque es aplicar un Análisis de Componentes
 Principales (PCA) a variables morfométricas para resumir la variación
-multivariada en pocos ejes interpretables (por ejemplo, un eje de tamaño
-general y otro de forma). El PCA ayudará a reducir la dimensionalidad,
-identificar correlaciones entre rasgos y construir índices compuestos
-que puedan usarse en modelos posteriores o informes técnicos. Se
-trabajará con las medidas morfométricas limpias y escaladas para
-asegurar comparabilidad entre variables y facilitar la interpretación
-biológica de las cargas de cada componente.
+multivariada en pocos ejes interpretables. El PCA ayudará a reducir la
+dimensionalidad, identificar correlaciones entre rasgos y construir
+índices compuestos que puedan usarse en modelos posteriores o informes
+técnicos.
+
+El NMDS se aplicará sobre una matriz de abundancia de especies, con el
+propósito de evaluar la similitud entre sitios de muestreo y explorar
+posibles gradientes ecológicos subyacentes, complementando el enfoque
+morfométrico del PCA con una perspectiva basada en la composición
+comunitaria.
 
 \section{Carga de librerías y
 dataset}\label{carga-de-libreruxedas-y-dataset}
@@ -289,11 +293,9 @@ supuestos}\label{preparaciuxf3n-de-datos-y-verificaciuxf3n-de-supuestos}
   \AttributeTok{descriptives =} \ConstantTok{FALSE}\NormalTok{,}
   \AttributeTok{tidy =} \ConstantTok{TRUE}
 \NormalTok{)}
-
 \NormalTok{norm\_tbl }\OtherTok{\textless{}{-}}\NormalTok{ mardia\_test}\SpecialCharTok{$}\NormalTok{multivariate\_normality }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(Test, Statistic, p.value, MVN) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
-
 
 \NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(norm\_tbl)}
 \end{Highlighting}
@@ -328,15 +330,14 @@ efectos de tamaño corporal.
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \CommentTok{\# Esfericidad (Bartlett) y adecuación muestral (KMO)}
-
 \NormalTok{bart }\OtherTok{\textless{}{-}}\NormalTok{ psych}\SpecialCharTok{::}\FunctionTok{cortest.bartlett}\NormalTok{(}\FunctionTok{cor}\NormalTok{(df\_pca[, }\DecValTok{3}\SpecialCharTok{:}\DecValTok{6}\NormalTok{]), }\AttributeTok{n =} \FunctionTok{nrow}\NormalTok{(df\_pca))}
 \NormalTok{kmo  }\OtherTok{\textless{}{-}}\NormalTok{ psych}\SpecialCharTok{::}\FunctionTok{KMO}\NormalTok{(}\FunctionTok{cor}\NormalTok{(df\_pca[, }\DecValTok{3}\SpecialCharTok{:}\DecValTok{6}\NormalTok{]))}
-
 \NormalTok{sphere\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
   \AttributeTok{Test =} \FunctionTok{c}\NormalTok{(}\StringTok{"Bartlett’s test of sphericity"}\NormalTok{, }\StringTok{"Kaiser{-}Meyer{-}Olkin (KMO)"}\NormalTok{),}
   \AttributeTok{Statistic =} \FunctionTok{c}\NormalTok{(}\FunctionTok{round}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{chisq, }\DecValTok{3}\NormalTok{), }\ConstantTok{NA}\NormalTok{),}
   \AttributeTok{df =} \FunctionTok{c}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{df, }\ConstantTok{NA}\NormalTok{),}
-  \AttributeTok{p\_value =} \FunctionTok{c}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{}0.001"}\NormalTok{, }\FunctionTok{round}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{p.value, }\DecValTok{3}\NormalTok{)), }\ConstantTok{NA}\NormalTok{),}
+  \AttributeTok{p\_value =} \FunctionTok{c}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{p.value }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{}0.001"}\NormalTok{, }
+          \FunctionTok{round}\NormalTok{(bart}\SpecialCharTok{$}\NormalTok{p.value, }\DecValTok{3}\NormalTok{)), }\ConstantTok{NA}\NormalTok{),}
   \AttributeTok{Measure =} \FunctionTok{c}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\FunctionTok{round}\NormalTok{(kmo}\SpecialCharTok{$}\NormalTok{MSA, }\DecValTok{3}\NormalTok{))}
 \NormalTok{)}
 
@@ -368,12 +369,10 @@ Tabla~\ref{tbl-pca-bartlett-kmo}), ya que el test de Bartlett resultó
 altamente significativo (χ² = 838.08, p \textless{} 0.001), rechazando
 la hipótesis nula de que la matriz de correlaciones sea una identidad,
 lo que confirma la existencia de correlaciones suficientes entre las
-variables.
-
-Por su parte, el índice KMO fue de 0.687, un valor considerado aceptable
-(por encima del umbral mínimo de 0.6), indicando que el tamaño de
-muestra y la estructura de correlaciones son adecuados para aplicar un
-PCA.
+variables. Por su parte, el índice KMO fue de 0.687, un valor
+considerado aceptable (por encima del umbral mínimo de 0.6), indicando
+que el tamaño de muestra y la estructura de correlaciones son adecuados
+para aplicar un PCA.
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -381,7 +380,6 @@ PCA.
 
 \NormalTok{cor\_mat }\OtherTok{\textless{}{-}} \FunctionTok{cor}\NormalTok{(df\_pca[, }\DecValTok{3}\SpecialCharTok{:}\DecValTok{6}\NormalTok{], }\AttributeTok{method =} \StringTok{"spearman"}\NormalTok{, }
                \AttributeTok{use =} \StringTok{"pairwise.complete.obs"}\NormalTok{)}
-
 \FunctionTok{ggcorrplot}\NormalTok{(}
 \NormalTok{  cor\_mat, }
   \AttributeTok{hc.order =} \ConstantTok{TRUE}\NormalTok{, }
@@ -428,8 +426,7 @@ resultados}{Ejecutar PCA con prcomp() y extraer resultados}}\label{ejecutar-pca-
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \NormalTok{pca\_fit }\OtherTok{\textless{}{-}} \FunctionTok{prcomp}\NormalTok{(df\_pca }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric)), }\AttributeTok{scale. =} \ConstantTok{TRUE}\NormalTok{, }
-                  \AttributeTok{center =} \ConstantTok{TRUE}\NormalTok{)}
-
+               \AttributeTok{center =} \ConstantTok{TRUE}\NormalTok{)}
 \CommentTok{\# Varianza explicada}
 \NormalTok{pca\_var }\OtherTok{\textless{}{-}}\NormalTok{ pca\_fit}\SpecialCharTok{$}\NormalTok{sdev}\SpecialCharTok{\^{}}\DecValTok{2}
 \NormalTok{pca\_var\_prop }\OtherTok{\textless{}{-}}\NormalTok{ pca\_var }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(pca\_var)}
@@ -491,7 +488,8 @@ loadings)}\label{gruxe1ficos-screeplot-y-biplot-scores-loadings}
 
 }
 
-\caption{\label{fig-pca-scree}Screeplot PCA}
+\caption{\label{fig-pca-scree}Screeplot PCA:proporción de varianza
+explicada por componente}
 
 \end{figure}%
 
@@ -540,7 +538,7 @@ con mayores pesos positivos son \emph{flipper\_length\_mm} (0.576) y
 moderado (-0.400). Esto indica que los individuos con mayores valores en
 PC1 tienden a tener alas más largas, mayor masa corporal y picos más
 largos pero menos profundos, es decir, una morfología asociada a un
-tamaño corporal globalmente mayor.
+tamaño corporal globalmente mayor (ver Tabla~\ref{tbl-pca-loadings}).
 
 La segunda componente (PC2), que aporta un 19.3 \% adicional de la
 varianza, representa principalmente variaciones en la forma del pico.
@@ -591,10 +589,10 @@ componentes principales}
 
 \end{figure}%
 
-El biplot de componentes principales (ver Figura~\ref{fig-pca-biplot})
-muestra simultáneamente la posición de los individuos de cada especie en
-el espacio definido por los dos primeros componentes y la dirección de
-las variables morfométricas que contribuyen a dicha variación.
+El biplot de componentes principales muestra simultáneamente la posición
+de los individuos de cada especie en el espacio definido por los dos
+primeros componentes y la dirección de las variables morfométricas que
+contribuyen a dicha variación.
 
 El primer componente (PC1) está fuertemente asociado con el tamaño
 corporal total, determinado principalmente por las variables
@@ -603,70 +601,34 @@ vectores largos y orientados en la misma dirección. Las especies con
 valores altos en este eje, como \emph{Gentoo}, se agrupan hacia el
 extremo positivo del PC1, indicando individuos más grandes y pesados. En
 contraste, \emph{Adelie} se concentra en el extremo negativo, reflejando
-individuos de menor tamaño.
+individuos de menor tamaño (ver Figura~\ref{fig-pca-biplot}).
 
 El segundo componente (PC2) captura variaciones en la morfología del
 pico, principalmente asociadas a las variables \emph{bill\_length\_mm} y
 \emph{bill\_depth\_mm}. En este eje, \emph{Chinstrap} tiende a ocupar
 posiciones intermedias o positivas, caracterizadas por picos más largos
 y delgados, mientras que \emph{Adelie} mantiene picos más cortos y
-profundos, situándose en la dirección opuesta.
+profundos, situándose en la dirección opuesta (ver
+Figura~\ref{fig-pca-biplot}).
 
-\section{Conclusiones y recomendaciones prácticas
-(PCA)}\label{conclusiones-y-recomendaciones-pruxe1cticas-pca}
+En síntesis, el análisis de componentes principales permite visualizar
+de manera clara la diferenciación morfológica entre las especies de
+pingüinos, destacando que el tamaño corporal y la forma del pico son los
+principales ejes de variación. Estas diferencias reflejan adaptaciones
+específicas de cada especie a su entorno y estrategias alimenticias, lo
+que respalda la utilidad del PCA como herramienta para comprender
+patrones de variación biológica y relaciones morfométricas entre grupos
+cercanos.
 
-El análisis de componentes principales permitió reducir cuatro variables
-morfométricas a dos ejes biológicamente interpretables:
-
-\begin{itemize}
-\item
-  PC1 (68.8 \%): gradiente de tamaño corporal general.
-\item
-  PC2 (19.3 \%): gradiente de forma del pico.
-\end{itemize}
-
-Estos resultados confirman que las diferencias entre \emph{Adelie},
-\emph{Chinstrap} y \emph{Gentoo} responden principalmente a contrastes
-en masa corporal, longitud de aleta y morfología del pico, variables
-estrechamente vinculadas con la ecología trófica y las estrategias
-adaptativas de cada especie.
-
-\section{Contexto de proyecto (NMDS)}\label{contexto-de-proyecto-nmds}
-
-\section{NMDS (Non-metric Multidimensional
-Scaling)}\label{nmds-non-metric-multidimensional-scaling}
+\section{Preparación de datos --- transformación Hellinger
+(NMDS)}\label{preparaciuxf3n-de-datos-transformaciuxf3n-hellinger-nmds}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \FunctionTok{data}\NormalTok{(varespec)}
 \FunctionTok{data}\NormalTok{(varechem)}
 
-\CommentTok{\# quick look}
-\FunctionTok{dim}\NormalTok{(varespec)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-[1] 24 44
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[numbers=left,,]
-\FunctionTok{dim}\NormalTok{(varechem)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-[1] 24 14
-\end{verbatim}
-
-\section{Preparación de datos --- transformación
-Hellinger}\label{preparaciuxf3n-de-datos-transformaciuxf3n-hellinger}
-
-\begin{Shaded}
-\begin{Highlighting}[numbers=left,,]
 \CommentTok{\# Hellinger transforma abundancias para métodos basados en distancia euclidiana,}
-\CommentTok{\# y mejora el comportamiento para ordination (Legendre \& Gallagher 2001).}
 \NormalTok{varespec\_hel }\OtherTok{\textless{}{-}} \FunctionTok{decostand}\NormalTok{(varespec, }\AttributeTok{method =} \StringTok{"hellinger"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
@@ -677,120 +639,289 @@ defecto)}{Ejecutar NMDS con metaMDS() (Bray-Curtis por defecto)}}\label{ejecutar
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Ajuste del NMDS (sin mostrar mensajes de ejecución)}
 \FunctionTok{set.seed}\NormalTok{(}\DecValTok{42}\NormalTok{)}
-\NormalTok{nmds }\OtherTok{\textless{}{-}} \FunctionTok{metaMDS}\NormalTok{(varespec\_hel, }\AttributeTok{distance =} \StringTok{"bray"}\NormalTok{, }\AttributeTok{k =} \DecValTok{2}\NormalTok{, }\AttributeTok{trymax =} \DecValTok{100}\NormalTok{,}
-                \AttributeTok{autotransform =} \ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{suppressMessages}\NormalTok{(\{}
+  \FunctionTok{capture.output}\NormalTok{(\{}
+\NormalTok{    nmds }\OtherTok{\textless{}{-}} \FunctionTok{metaMDS}\NormalTok{(}
+\NormalTok{      varespec\_hel,}
+      \AttributeTok{distance =} \StringTok{"bray"}\NormalTok{,}
+      \AttributeTok{k =} \DecValTok{2}\NormalTok{,}
+      \AttributeTok{trymax =} \DecValTok{100}\NormalTok{,}
+      \AttributeTok{autotransform =} \ConstantTok{FALSE}
+\NormalTok{    )}
+\NormalTok{  \})}
+\NormalTok{\})}
 \end{Highlighting}
 \end{Shaded}
-
-\begin{verbatim}
-Run 0 stress 0.1228292 
-Run 1 stress 0.121821 
-... New best solution
-... Procrustes: rmse 0.03146394  max resid 0.1263207 
-Run 2 stress 0.1230632 
-Run 3 stress 0.1228292 
-Run 4 stress 0.1228292 
-Run 5 stress 0.121821 
-... Procrustes: rmse 9.728311e-07  max resid 2.048083e-06 
-... Similar to previous best
-Run 6 stress 0.121821 
-... Procrustes: rmse 2.002957e-06  max resid 5.821418e-06 
-... Similar to previous best
-Run 7 stress 0.1228292 
-Run 8 stress 0.1228292 
-Run 9 stress 0.1228292 
-Run 10 stress 0.1857432 
-Run 11 stress 0.121821 
-... New best solution
-... Procrustes: rmse 1.715277e-06  max resid 6.042394e-06 
-... Similar to previous best
-Run 12 stress 0.1219922 
-... Procrustes: rmse 0.01745999  max resid 0.0639714 
-Run 13 stress 0.184954 
-Run 14 stress 0.1857433 
-Run 15 stress 0.121821 
-... Procrustes: rmse 5.136977e-06  max resid 1.90961e-05 
-... Similar to previous best
-Run 16 stress 0.1228292 
-Run 17 stress 0.1228292 
-Run 18 stress 0.1228292 
-Run 19 stress 0.1228292 
-Run 20 stress 0.121821 
-... Procrustes: rmse 1.419556e-06  max resid 4.532509e-06 
-... Similar to previous best
-*** Best solution repeated 3 times
-\end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
-\CommentTok{\# Resumen}
-\NormalTok{nmds}
+\CommentTok{\# Curva de ajuste (stressplot)}
+\NormalTok{vegan}\SpecialCharTok{::}\FunctionTok{stressplot}\NormalTok{(nmds)}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
+\begin{figure}[H]
 
-Call:
-metaMDS(comm = varespec_hel, distance = "bray", k = 2, trymax = 100,      autotransform = FALSE) 
+\centering{
 
-global Multidimensional Scaling using monoMDS
+\pandocbounded{\includegraphics[keepaspectratio]{PCA-nMDS_files/figure-pdf/fig-nmds-stress-1.pdf}}
 
-Data:     varespec_hel 
-Distance: bray 
+}
 
-Dimensions: 2 
-Stress:     0.121821 
-Stress type 1, weak ties
-Best solution was repeated 3 times in 20 tries
-The best solution was from try 11 (random start)
-Scaling: centring, PC rotation, halfchange scaling 
-Species: expanded scores based on 'varespec_hel' 
-\end{verbatim}
+\caption{\label{fig-nmds-stress}Curva de ajuste NMDS (stressplot) para
+evaluar la calidad del ordenamiento}
 
-\begin{Shaded}
-\begin{Highlighting}[numbers=left,,]
-\FunctionTok{stressplot}\NormalTok{(nmds)  }\CommentTok{\# Shepard plot}
-\end{Highlighting}
-\end{Shaded}
+\end{figure}%
 
-\pandocbounded{\includegraphics[keepaspectratio]{PCA-nMDS_files/figure-pdf/nmds_fit-1.pdf}}
+El análisis de escala multidimensional no métrica (NMDS) alcanzó un
+valor de \emph{stress} de 0.12, lo cual indica una representación
+bidimensional adecuada según los criterios de Kruskal (valores
+\textless{} 0.2 son aceptables, y \textless{} 0.1 excelentes). Los
+indicadores de ajuste complementarios refuerzan la calidad del
+ordenamiento: Non-metric fit R² = 0.985: sugiere que el 98.5 \% de la
+variación en las distancias rankeadas se preserva en el espacio de dos
+dimensiones. Linear fit R² = 0.921: indica una alta correspondencia
+lineal entre las distancias originales y las del NMDS (ver
+Figura~\ref{fig-nmds-stress}).
 
 \section{Visualización NMDS: sitios + especies +
 envfit}\label{visualizaciuxf3n-nmds-sitios-especies-envfit}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
-\CommentTok{\# Extraer scores}
+\CommentTok{\# Ajustar variables ambientales (envfit)}
+\NormalTok{ef }\OtherTok{\textless{}{-}} \FunctionTok{envfit}\NormalTok{(nmds, varechem, }\AttributeTok{permutations =} \DecValTok{999}\NormalTok{)}
+
+\CommentTok{\# Extraer resultados del envfit}
+\NormalTok{ef\_results }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{arrows)}
+\NormalTok{ef\_r2 }\OtherTok{\textless{}{-}}\NormalTok{ ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{r}
+\NormalTok{ef\_p }\OtherTok{\textless{}{-}}\NormalTok{ ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{pvals}
+
+\CommentTok{\# Crear tabla resumen}
+\NormalTok{tabla\_envfit }\OtherTok{\textless{}{-}}\NormalTok{ ef\_results }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{rownames\_to\_column}\NormalTok{(}\StringTok{"Variable"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{R2 =} \FunctionTok{round}\NormalTok{(ef\_r2, }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{p\_value =} \FunctionTok{signif}\NormalTok{(ef\_p, }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{NMDS1 =} \FunctionTok{round}\NormalTok{(NMDS1, }\DecValTok{3}\NormalTok{),}
+    \AttributeTok{NMDS2 =} \FunctionTok{round}\NormalTok{(NMDS2, }\DecValTok{3}\NormalTok{)}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(R2))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}
+\NormalTok{  tabla\_envfit,}
+  \AttributeTok{align =} \StringTok{"lcccc"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lcccc@{}}
+
+\caption{\label{tbl-nmds-envfit}Resultados del ajuste de variables
+ambientales (envfit) sobre el espacio NMDS}
+
+\tabularnewline
+
+\toprule\noalign{}
+Variable & NMDS1 & NMDS2 & R2 & p\_value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Mn & 0.999 & 0.043 & 0.468 & 0.001 \\
+Humdepth & 0.994 & 0.110 & 0.466 & 0.003 \\
+Al & -0.981 & 0.196 & 0.460 & 0.002 \\
+Fe & -0.970 & 0.244 & 0.414 & 0.003 \\
+Ca & 0.959 & 0.284 & 0.308 & 0.020 \\
+Mg & 0.998 & 0.065 & 0.223 & 0.077 \\
+P & 0.882 & 0.471 & 0.217 & 0.084 \\
+pH & -0.875 & 0.484 & 0.215 & 0.069 \\
+K & 0.954 & 0.300 & 0.195 & 0.104 \\
+Baresoil & 0.889 & -0.458 & 0.184 & 0.123 \\
+Zn & 0.954 & -0.300 & 0.149 & 0.178 \\
+N & -0.024 & -1.000 & 0.091 & 0.339 \\
+Mo & -0.606 & -0.796 & 0.076 & 0.429 \\
+S & 0.853 & 0.522 & 0.040 & 0.658 \\
+
+\end{longtable}
+
+Los resultados del ajuste de variables ambientales sobre el espacio de
+ordenamiento NMDS (ver Tabla~\ref{tbl-nmds-envfit}) permiten cuantificar
+la influencia de cada factor edáfico sobre la composición de especies.
+Los valores de R² indican la fuerza de la relación entre cada variable y
+la estructura de la comunidad, mientras que los valores de p reflejan su
+significancia estadística.
+
+Las variables Mn, Humdepth, Al y Fe muestran los valores de R² más altos
+(≥ 0.41, \emph{p} \textless{} 0.01), lo que evidencia que son los
+principales controladores de la variación observada. Mn y Humdepth se
+orientan hacia el cuadrante derecho del diagrama, representando sitios
+con suelos más fértiles, mayor contenido de materia orgánica y
+disponibilidad de nutrientes. En contraste, Al y Fe apuntan hacia el
+cuadrante izquierdo, definiendo un gradiente de acidez y metalización,
+asociado a suelos menos fértiles y más restrictivos para el crecimiento
+vegetal.
+
+Un segundo grupo de variables, con valores intermedios de R² (entre 0.20
+y 0.30), incluye Ca, Mg, P y pH. Estas variables refuerzan el eje
+principal del ordenamiento: mientras Ca, Mg y P se agrupan hacia la
+derecha, representando la fertilidad edáfica, el pH (con sentido
+opuesto) marca el extremo ácido de dicho gradiente.
+
+Finalmente, variables como K, Baresoil, Zn, N, Mo y S presentan valores
+bajos de R² (\textless{} 0.20) y sin significancia estadística (\emph{p}
+\textgreater{} 0.05), por lo que su contribución a la organización
+global de las comunidades es menor. No obstante, podrían reflejar
+variaciones locales o efectos secundarios asociados a la exposición,
+perturbación o heterogeneidad microambiental.
+
+En conjunto, los resultados del \emph{envfit} confirman que el
+ordenamiento NMDS está estructurado principalmente por un gradiente de
+fertilidad--acidez del suelo, donde la composición vegetal responde a la
+disponibilidad de nutrientes y a las condiciones edáficas que limitan o
+favorecen el desarrollo de las especies.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Extraer coordenadas de sitios}
 \NormalTok{sites\_scores }\OtherTok{\textless{}{-}} \FunctionTok{as\_tibble}\NormalTok{(}\FunctionTok{scores}\NormalTok{(nmds, }\AttributeTok{display =} \StringTok{"sites"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{site =} \FunctionTok{rownames}\NormalTok{(varespec))}
 
+\CommentTok{\# Extraer coordenadas de especies}
 \NormalTok{species\_scores }\OtherTok{\textless{}{-}} \FunctionTok{as\_tibble}\NormalTok{(}\FunctionTok{scores}\NormalTok{(nmds, }\AttributeTok{display =} \StringTok{"species"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{rownames\_to\_column}\NormalTok{(}\StringTok{"species"}\NormalTok{)}
 
-\CommentTok{\# Envfit: ajustar variables ambientales al ordination}
+\CommentTok{\# Ajustar variables ambientales (envfit)}
 \NormalTok{ef }\OtherTok{\textless{}{-}} \FunctionTok{envfit}\NormalTok{(nmds, varechem, }\AttributeTok{permutations =} \DecValTok{999}\NormalTok{)}
 
-\CommentTok{\# Plot ejemplo con ggplot}
+\CommentTok{\# Mantener nombres correctos de variables ambientales}
+\NormalTok{ef\_arrows }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{arrows)}
+\NormalTok{ef\_arrows}\SpecialCharTok{$}\NormalTok{var }\OtherTok{\textless{}{-}} \FunctionTok{rownames}\NormalTok{(ef\_arrows)}
+\NormalTok{ef\_arrows }\OtherTok{\textless{}{-}}\NormalTok{ ef\_arrows }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{as\_tibble}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{rename}\NormalTok{(}\AttributeTok{NMDS1 =}\NormalTok{ NMDS1, }\AttributeTok{NMDS2 =}\NormalTok{ NMDS2)}
+
+\CommentTok{\# Gráfico NMDS con vectores ambientales}
 \FunctionTok{ggplot}\NormalTok{(sites\_scores, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ NMDS1, }\AttributeTok{y =}\NormalTok{ NMDS2)) }\SpecialCharTok{+}
-  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{size =} \DecValTok{3}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{geom\_text\_repel}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{label =}\NormalTok{ site), }\AttributeTok{size =} \DecValTok{3}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{geom\_segment}\NormalTok{(}\AttributeTok{data =} \FunctionTok{as\_tibble}\NormalTok{(ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{arrows) }\SpecialCharTok{\%\textgreater{}\%} 
-                 \FunctionTok{rownames\_to\_column}\NormalTok{(}\StringTok{"var"}\NormalTok{),}
-               \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \DecValTok{0}\NormalTok{, }\AttributeTok{y =} \DecValTok{0}\NormalTok{, }\AttributeTok{xend =}\NormalTok{ NMDS1, }\AttributeTok{yend =}\NormalTok{ NMDS2),}
-               \AttributeTok{arrow =} \FunctionTok{arrow}\NormalTok{(}\AttributeTok{length =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.2}\NormalTok{,}\StringTok{"cm"}\NormalTok{)), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{geom\_text\_repel}\NormalTok{(}\AttributeTok{data =} \FunctionTok{as\_tibble}\NormalTok{(ef}\SpecialCharTok{$}\NormalTok{vectors}\SpecialCharTok{$}\NormalTok{arrows) }\SpecialCharTok{\%\textgreater{}\%} 
-                    \FunctionTok{rownames\_to\_column}\NormalTok{(}\StringTok{"var"}\NormalTok{),}
-                  \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ NMDS1, }\AttributeTok{y =}\NormalTok{ NMDS2, }\AttributeTok{label =}\NormalTok{ var), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"NMDS (stress = "}\NormalTok{, }\FunctionTok{round}\NormalTok{(nmds}\SpecialCharTok{$}\NormalTok{stress, }\DecValTok{3}\NormalTok{), }\StringTok{")"}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{size =} \DecValTok{3}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.8}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_text\_repel}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{label =}\NormalTok{ site), }\AttributeTok{size =} \DecValTok{3}\NormalTok{, }\AttributeTok{max.overlaps =} \DecValTok{15}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_segment}\NormalTok{(}
+    \AttributeTok{data =}\NormalTok{ ef\_arrows,}
+    \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \DecValTok{0}\NormalTok{, }\AttributeTok{y =} \DecValTok{0}\NormalTok{, }\AttributeTok{xend =}\NormalTok{ NMDS1, }\AttributeTok{yend =}\NormalTok{ NMDS2),}
+    \AttributeTok{arrow =} \FunctionTok{arrow}\NormalTok{(}\AttributeTok{length =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.25}\NormalTok{, }\StringTok{"cm"}\NormalTok{)),}
+    \AttributeTok{color =} \StringTok{"black"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{geom\_text\_repel}\NormalTok{(}
+    \AttributeTok{data =}\NormalTok{ ef\_arrows,}
+    \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ NMDS1, }\AttributeTok{y =}\NormalTok{ NMDS2, }\AttributeTok{label =}\NormalTok{ var),}
+    \AttributeTok{size =} \DecValTok{3}\NormalTok{,}
+    \AttributeTok{color =} \StringTok{"black"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}
+    \AttributeTok{title =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"NMDS (stress = "}\NormalTok{, }\FunctionTok{round}\NormalTok{(nmds}\SpecialCharTok{$}\NormalTok{stress, }\DecValTok{3}\NormalTok{), }\StringTok{")"}\NormalTok{),}
+    \AttributeTok{x =} \StringTok{"NMDS1"}\NormalTok{,}
+    \AttributeTok{y =} \StringTok{"NMDS2"}
+\NormalTok{  ) }\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{()}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{PCA-nMDS_files/figure-pdf/nmds_plot-1.pdf}}
+\begin{figure}[H]
 
-\section{Conclusiones y recomendaciones prácticas
-(NMDS)}\label{conclusiones-y-recomendaciones-pruxe1cticas-nmds}
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{PCA-nMDS_files/figure-pdf/fig-nmds-biplot-1.pdf}}
+
+}
+
+\caption{\label{fig-nmds-biplot}Ordenamiento NMDS basado en distancias
+de Bray--Curtis, con ajuste de variables ambientales mediante envfit}
+
+\end{figure}%
+
+El biplot del NMDS representa la estructura de similitud entre los
+sitios en función de la composición de especies (varespec), incorporando
+además los gradientes ambientales medidos en cada sitio (varechem). Los
+vectores ambientales indican la dirección y magnitud de las variables
+que mejor explican la variación en la comunidad biológica: cuanto más
+largos y definidos, mayor es su poder explicativo sobre la distribución
+de las especies (ver Figura~\ref{fig-nmds-biplot}).
+
+El nitrógeno (N) muestra un vector orientado hacia la parte inferior del
+eje NMDS2, lo que sugiere que los sitios en esa dirección presentan
+concentraciones elevadas de este nutriente y comunidades asociadas a
+ambientes más enriquecidos.
+
+Las variables S (azufre), P (fósforo), K (potasio) y Ca (calcio) apuntan
+hacia el cuadrante superior derecho del diagrama, indicando que los
+sitios en esta región se asocian a suelos más fértiles y con mayor
+disponibilidad de nutrientes, donde predominan especies adaptadas a
+condiciones más productivas.
+
+Por otro lado, pH, Fe (hierro) y Al (aluminio) se orientan hacia el
+cuadrante superior izquierdo, definiendo un gradiente de acidez y
+metalización. Los sitios en esta dirección tienden a presentar suelos
+más ácidos y menos fértiles, lo que puede restringir el crecimiento
+vegetal y favorecer especies tolerantes a condiciones edáficas
+limitantes.
+
+Las variables Baresoil (suelo desnudo) y Zn (zinc) apuntan hacia el
+cuadrante inferior derecho, lo que podría reflejar sitios más abiertos o
+degradados, con menor cobertura vegetal y condiciones más extremas o
+expuestas.
+
+Además, la proximidad entre los vectores de S, P, K y Ca indica que
+estas variables co-varían positivamente, definiendo un eje de fertilidad
+edáfica. En cambio, la orientación opuesta de pH, Fe y Al revela un
+gradiente inverso de acidez y metalización, contrapuesto a la
+fertilidad. Por su parte, el nitrógeno (N) mantiene una posición
+relativamente independiente, lo que sugiere que su variación no está
+directamente alineada con los principales gradientes ambientales.
+
+La posición de los sitios en el espacio NMDS refuerza estas
+asociaciones:
+
+\begin{itemize}
+\item
+  Los sitios cercanos entre sí (por ejemplo, 1, 3, 9, 10 y 12) presentan
+  una composición florística similar, vinculada con suelos ácidos y
+  altos contenidos de Fe y Al.
+\item
+  En contraste, los sitios 14, 15, 24 y 25 se agrupan hacia el extremo
+  inferior derecho, asociados a altos valores de Zn y mayor proporción
+  de suelo desnudo, característicos de hábitats más empobrecidos o
+  erosionados.
+\item
+  Algunos sitios más dispersos, como 21 o 27, podrían representar zonas
+  de transición ecológica, donde confluyen gradientes intermedios de
+  fertilidad y acidez.
+\end{itemize}
+
+En conjunto, el ordenamiento NMDS muestra una estructura clara donde los
+patrones de composición de especies se explican principalmente por
+gradientes edáficos de fertilidad, acidez y contenido metálico,
+evidenciando la fuerte influencia del ambiente físico sobre la
+organización ecológica de las comunidades.
+
+\section{Conclusiones}\label{conclusiones}
+
+El análisis de componentes principales permitió reducir cuatro variables
+morfométricas a dos ejes biológicamente interpretables, PC1 (68.8 \%):
+gradiente de tamaño corporal general.y PC2 (19.3 \%): gradiente de forma
+del pico. Estos resultados confirman que las diferencias entre
+\emph{Adelie}, \emph{Chinstrap} y \emph{Gentoo} responden principalmente
+a contrastes en masa corporal, longitud de aleta y morfología del pico,
+variables estrechamente vinculadas con la ecología trófica y las
+estrategias adaptativas de cada especie.
+
+En síntesis, el NMDS evidenció que la estructura de las comunidades
+vegetales está fuertemente condicionada por gradientes de fertilidad
+(definido por concentraciones de S, P, K y Ca) y acidez del suelo
+(explicado por pH, Fe y Al), y constituye un método flexible y poderoso
+para explorar patrones ecológicos complejos, incluso en escenarios con
+datos no normales o altamente heterogéneos.
 
 
 
