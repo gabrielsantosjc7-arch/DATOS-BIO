@@ -204,3 +204,82 @@ suppressMessages({
 # Curva de ajuste (stressplot)
 vegan::stressplot(nmds)
 ```
+## Visualización NMDS: sitios + especies + envfit
+
+```{r}
+#| label: tbl-nmds-envfit
+#| tbl-cap: "Resultados del ajuste de variables ambientales (envfit) sobre el espacio NMDS"
+
+# Ajustar variables ambientales (envfit)
+ef <- envfit(nmds, varechem, permutations = 999)
+
+# Extraer resultados del envfit
+ef_results <- as.data.frame(ef$vectors$arrows)
+ef_r2 <- ef$vectors$r
+ef_p <- ef$vectors$pvals
+
+# Crear tabla resumen
+tabla_envfit <- ef_results %>%
+  rownames_to_column("Variable") %>%
+  mutate(
+    R2 = round(ef_r2, 3),
+    p_value = signif(ef_p, 3),
+    NMDS1 = round(NMDS1, 3),
+    NMDS2 = round(NMDS2, 3)
+  ) %>%
+  arrange(desc(R2))
+
+knitr::kable(
+  tabla_envfit,
+  align = "lcccc"
+)
+
+```
+```{r}
+#| label: fig-nmds-biplot
+#| fig-cap: "Ordenamiento NMDS basado en distancias de Bray–Curtis, con ajuste de variables ambientales mediante envfit"
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 6
+
+# Extraer coordenadas de sitios
+sites_scores <- as_tibble(scores(nmds, display = "sites")) %>%
+  mutate(site = rownames(varespec))
+
+# Extraer coordenadas de especies
+species_scores <- as_tibble(scores(nmds, display = "species")) %>%
+  rownames_to_column("species")
+
+# Ajustar variables ambientales (envfit)
+ef <- envfit(nmds, varechem, permutations = 999)
+
+# Mantener nombres correctos de variables ambientales
+ef_arrows <- as.data.frame(ef$vectors$arrows)
+ef_arrows$var <- rownames(ef_arrows)
+ef_arrows <- ef_arrows %>%
+  as_tibble() %>%
+  rename(NMDS1 = NMDS1, NMDS2 = NMDS2)
+
+# Gráfico NMDS con vectores ambientales
+ggplot(sites_scores, aes(x = NMDS1, y = NMDS2)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_text_repel(aes(label = site), size = 3, max.overlaps = 15) +
+  geom_segment(
+    data = ef_arrows,
+    aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2),
+    arrow = arrow(length = unit(0.25, "cm")),
+    color = "black"
+  ) +
+  geom_text_repel(
+    data = ef_arrows,
+    aes(x = NMDS1, y = NMDS2, label = var),
+    size = 3,
+    color = "black"
+  ) +
+  labs(
+    title = paste0("NMDS (stress = ", round(nmds$stress, 3), ")"),
+    x = "NMDS1",
+    y = "NMDS2"
+  ) +
+  theme_minimal()
