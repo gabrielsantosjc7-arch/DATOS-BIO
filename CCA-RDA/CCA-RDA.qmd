@@ -166,3 +166,97 @@ ggplot() +
        x = "RDA1", y = "RDA2") +
   theme_minimal(base_size = 12)
 
+## CCA: ajuste, tests y resumen
+
+```{r}
+#| label: tbl-cca-mod
+#| tbl-cap: "Modelo CCA completo"
+#| warning: false
+#| message: false
+
+# Usar mismas variables depuradas que en RDA
+form_cca <- as.formula(paste("varespec ~", paste(vars_select, 
+                       collapse = " + ")))
+
+# Ajustar modelo
+cca_mod <- cca(form_cca, data = as.data.frame(varechem_scaled))
+
+# Pruebas de significancia
+anova_cca_global <- anova.cca(cca_mod, permutations = 999)
+anova_cca_axes   <- anova.cca(cca_mod, by = "axis", permutations = 999)
+anova_cca_terms  <- anova.cca(cca_mod, by = "terms", permutations = 999)
+
+# Tabla de inercia
+cca_inertia <- data.frame(
+  Componente = c("Total", "Constrained", "Unconstrained"),
+  Inercia = c(cca_mod$tot.chi, cca_mod$CCA$tot.chi, cca_mod$CA$tot.chi)
+) %>%
+  mutate(Proporción = Inercia / cca_mod$tot.chi)
+
+knitr::kable(cca_inertia)
+
+```{r}
+#| label: tbl-anova-global-cca
+#| warning: false
+#| message: false
+#| tbl-cap: "ANOVA global del modelo CCA (permutaciones = 999)"
+
+knitr::kable(broom::tidy(anova_cca_global))
+
+```{r}
+#| label: tbl-anova-ejes-cca
+#| warning: false
+#| message: false
+#| tbl-cap: "ANOVA por ejes CCA"
+
+knitr::kable(broom::tidy(anova_cca_axes))
+
+```{r}
+#| label: tbl-anova-terminos-cca
+#| warning: false
+#| message: false
+#| tbl-cap: "ANOVA por términos CCA (cada variable ambiental)"
+
+knitr::kable(broom::tidy(anova_cca_terms))
+
+```{r}
+#| label: fig-cca-biplot
+#| fig-cap: "Biplot CCA: diferenciación de sitios, especies y variables ambientales"
+#| fig-width: 7
+#| fig-height: 6
+#| warning: false
+#| message: false
+
+# Extraer scores del modelo CCA
+site_scr <- scores(cca_mod, display = "sites")
+sp_scr   <- scores(cca_mod, display = "species")
+env_scr  <- scores(cca_mod, display = "bp")
+
+# Convertir a tibbles
+site_df <- as_tibble(site_scr) %>% mutate(site = rownames(site_scr))
+sp_df   <- as_tibble(sp_scr) %>% mutate(species = rownames(sp_scr))
+env_df  <- as_tibble(env_scr) %>% mutate(var = rownames(env_scr))
+
+# Graficar
+ggplot() +
+  # Sitios
+  geom_point(data = site_df, aes(x = CCA1, y = CCA2), 
+             color = "#1f77b4", size = 3, alpha = 0.8) +
+  geom_text_repel(data = site_df, aes(x = CCA1, y = CCA2, label = site),
+                  size = 3, color = "#1f77b4") +
+  
+  # Especies
+  geom_point(data = sp_df, aes(x = CCA1, y = CCA2), 
+             color = "#d62728", size = 2, alpha = 0.8) +
+  geom_text_repel(data = sp_df, aes(x = CCA1, y = CCA2, label = species),
+                  size = 2.5, color = "#d62728") +
+  
+  # Variables ambientales (flechas)
+  geom_segment(data = env_df, aes(x = 0, y = 0, xend = CCA1, yend = CCA2),
+               arrow = arrow(length = unit(0.25, "cm")), color = "black") +
+  geom_text_repel(data = env_df, aes(x = CCA1, y = CCA2, label = var),
+                  size = 3, color = "black", fontface = "bold") +
+  
+  labs(title = "Biplot CCA (CCA1 vs CCA2)",
+       x = "CCA1", y = "CCA2") +
+  theme_minimal()
