@@ -53,3 +53,116 @@ varespec_log  <- decostand(varespec, method = "log", na.rm = TRUE)  # para CCA
 varechem_scaled <- scale(varechem)
 
 ```
+```{r}
+#| label: tbl-cca-rda-vif
+#| tbl-cap: "VIF (inflación de la varianza) para variables ambientales (modelo RDA preliminar)"
+
+# Modelo RDA preliminar para evaluar VIF
+rda_prelim <- rda(varespec_hel ~ ., data = as.data.frame(varechem_scaled))
+vif_vals <- vif.cca(rda_prelim)  # VIF por variable en vegan
+vif_tbl <- tibble(variable = names(vif_vals), VIF = round(vif_vals, 3))
+knitr::kable(vif_tbl)
+
+```
+```{r}
+#| label: tbl-anova-global-rda
+#| tbl-cap: "ANOVA global RDA depurado (permutaciones)"
+#| warning: false
+#| message: false
+
+#  Calcular VIF para identificar colinealidad
+
+vif_vals <- vif.cca(rda(varespec_hel ~ .,
+data = as.data.frame(varechem_scaled)))
+vif_tbl <- tibble(variable = names(vif_vals), VIF = vif_vals)
+
+# Seleccionar variables con VIF <= 10
+
+vars_select <- vif_tbl %>%
+filter(VIF <= 10) %>%
+pull(variable)
+
+# Ajustar modelo RDA con variables depuradas
+
+form <- as.formula(paste("varespec_hel ~", paste(vars_select,
+collapse = " + ")))
+rda_mod2 <- rda(form, data = as.data.frame(varechem_scaled))
+
+# Evaluaciones estadísticas
+
+anova_rda_global <- anova.cca(rda_mod2, permutations = 999)
+anova_rda_axes   <- anova.cca(rda_mod2, by = "axis", permutations = 999)
+anova_rda_terms  <- anova.cca(rda_mod2, by = "terms", permutations = 999)
+
+# Tabla de resultados
+
+knitr::kable(broom::tidy(anova_rda_global))
+
+
+```{r}
+#| label: tbl-anova-ejes-rda
+#| tbl-cap: "ANOVA por ejes RDA depurado"
+#| warning: false
+#| message: false
+
+# Tabla ANOVA por ejes
+
+knitr::kable(broom::tidy(anova_rda_axes))
+
+```
+
+```{r}
+#| label: tbl-anova-terminos-rda
+#| tbl-cap: "ANOVA por términos RDA depurado (cada variable)"
+#| warning: false
+#| message: false
+
+# Tabla ANOVA por términos
+
+knitr::kable(broom::tidy(anova_rda_terms))
+
+```
+
+```{r}
+#| label: fig-rda-biplot
+#| fig-cap: "Biplot RDA: sitios, especies y variables ambientales (RDA sobre transformaciones Hellinger)"
+#| fig-width: 7
+#| fig-height: 6
+#| warning: false
+#| message: false
+
+# Extraer scores del modelo RDA depurado
+site_scr <- scores(rda_mod2, display = "sites")
+sp_scr   <- scores(rda_mod2, display = "species")
+env_scr  <- scores(rda_mod2, display = "bp")  # bp = biplot scores 
+
+# Convertir a tibble con nombres
+site_df <- as_tibble(site_scr, rownames = "site")
+sp_df   <- as_tibble(sp_scr, rownames = "species")
+env_df  <- as_tibble(env_scr, rownames = "var")
+
+# Graficar biplot diferenciado
+ggplot() +
+  # Puntos de sitios (azul)
+  geom_point(data = site_df, aes(x = RDA1, y = RDA2), color = "#1f77b4", 
+             size = 3, alpha = 0.8) +
+  geom_text_repel(data = site_df, aes(x = RDA1, y = RDA2, label = site), 
+                  size = 3, color = "#1f77b4") +
+  
+  # Puntos de especies (rojo)
+  geom_point(data = sp_df, aes(x = RDA1, y = RDA2), color = "#d62728", 
+             size = 2, alpha = 0.7) +
+  geom_text_repel(data = sp_df, aes(x = RDA1, y = RDA2, label = species), 
+                  size = 2.5, color = "#d62728") +
+  
+  # Vectores ambientales (negros)
+  geom_segment(data = env_df, aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.25, "cm")), color = "black") +
+  geom_text_repel(data = env_df, aes(x = RDA1, y = RDA2, label = var), 
+                  size = 3, color = "black") +
+  
+  # Etiquetas y tema
+  labs(title = "Biplot RDA (RDA1 vs RDA2)",
+       x = "RDA1", y = "RDA2") +
+  theme_minimal(base_size = 12)
+
