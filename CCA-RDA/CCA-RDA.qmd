@@ -260,3 +260,30 @@ ggplot() +
   labs(title = "Biplot CCA (CCA1 vs CCA2)",
        x = "CCA1", y = "CCA2") +
   theme_minimal()
+## Comparación RDA vs CCA
+
+```{r}
+#| label: tbl-cca-rda-compare
+#| message: false
+#| warning: false
+#| tbl-cap: "Comparación RDA vs CCA (resumen de ajuste y significancia)"
+
+# Estadísticos de RDA
+rda_stats <- tibble(
+  method = "RDA",
+  adjR2 = RsquareAdj(rda_mod2)$adj.r.squared,
+  p_global = broom::tidy(anova_rda_global)$p.value[1]
+)
+
+# Estadísticos de CCA
+cca_stats <- tibble(
+  method = "CCA",
+  adjR2 = RsquareAdj(cca_mod)$adj.r.squared,
+  p_global = broom::tidy(anova_cca_global)$p.value[1]
+)
+
+# Tabla comparativa
+comparacion_rda_cca <- bind_rows(rda_stats, cca_stats)
+
+knitr::kable(comparacion_rda_cca, digits = 3)
+
