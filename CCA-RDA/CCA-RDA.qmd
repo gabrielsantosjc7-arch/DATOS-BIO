@@ -1,0 +1,55 @@
+## Preparación de datos y transformaciones
+
+```{r}
+#| label: tbl-cca-dimensiones
+#| tbl-cap: "Dimensiones de los conjuntos de datos biológicos (varespec) y ambientales (varechem)"
+#| warning: false
+#| message: false
+
+#  Comprobar dimensiones de las matrices
+
+dims <- tibble(
+objeto = c("varespec (especies)", "varechem (ambientales)"),
+filas = c(nrow(varespec), nrow(varechem)),
+columnas = c(ncol(varespec), ncol(varechem))
+)
+knitr::kable(dims)
+
+```
+
+```{r}
+#| label: tbl-cca-ceros
+#| tbl-cap: "Proporción de ceros en las primeras seis especies de la matriz de abundancias"
+#| warning: false
+#| message: false
+
+#  Revisar rareza (proporción de ceros)
+
+zero_prop <- tibble(
+variable = colnames(varespec),
+prop_zero = colSums(varespec == 0) / nrow(varespec)
+)
+
+zero_prop %>%
+arrange(desc(prop_zero)) %>%
+head(6) %>%
+knitr::kable(digits = 3)
+
+```
+
+```{r}
+#| label: code-cca-transform
+#| echo: true
+#| results: 'hide'
+#| warning: false
+
+# Transformaciones para análisis
+
+varespec_hel <- decostand(varespec, method = "hellinger")  # para RDA
+varespec_log  <- decostand(varespec, method = "log", na.rm = TRUE)  # para CCA
+
+#  Escalar variables ambientales
+
+varechem_scaled <- scale(varechem)
+
+```
