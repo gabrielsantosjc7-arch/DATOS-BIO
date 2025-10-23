@@ -90,3 +90,58 @@ set.seed(42)
 gap <- clusGap(num_scaled, FUN = kmeans, K.max = 6, B = 50)
 fviz_gap_stat(gap)  # figura
 ```
+```{r}
+#| label: fig-clust-kmeans
+#| fig-cap: "K-means (k = 2) y representación en PC1-PC2"
+#| fig-width: 7
+#| fig-height: 5
+#| warning: false
+#| message: false
+
+# Ejecutar k-means con el k elegido (aquí usamos el k con mayor sil_avg)
+k_opt <- sil_vals$k[which.max(sil_vals$sil_avg)]
+set.seed(42)
+km_res <- kmeans(num_scaled, centers = k_opt, nstart = 50)
+
+# Añadir cluster al df original
+df_clust <- A_raw %>% mutate(cluster_k = factor(km_res$cluster))
+
+# Visualizar clusters sobre PC1-PC2 (representación)
+fviz_cluster(km_res, data = num_scaled, geom = "point", ellipse.type = "norm",
+palette = "jco", ggtheme = theme_minimal())
+
+```{r}
+#| label: tbl-clust-summary
+#| tbl-cap: "Resumen comparativo de variables por clúster"
+#| warning: false
+#| message: false
+
+# Calcular medias por grupo en variables escaladas
+cluster_summary <- num_scaled %>%
+  mutate(cluster = km_res$cluster) %>%
+  pivot_longer(-cluster, names_to = "variable", values_to = "valor") %>%
+  group_by(cluster, variable) %>%
+  summarise(mean = mean(valor), .groups = "drop") %>%
+  pivot_wider(names_from = variable, values_from = mean)
+
+# Reordenar etiquetas de clúster según la media de Murder
+cluster_order <- cluster_summary %>%
+  mutate(avg_violence = Murder) %>%
+  arrange(avg_violence) %>%
+  mutate(new_cluster = row_number())
+
+# Crear un vector de equivalencia
+mapping <- cluster_order$new_cluster
+names(mapping) <- cluster_order$cluster
+
+# Reetiquetar clusters en los datos originales
+df_clust <- A_raw %>%
+  mutate(cluster_k = factor(mapping[km_res$cluster]))
+
+# Actualizar cluster_summary con nuevas etiquetas
+cluster_summary <- cluster_summary %>%
+  mutate(cluster = mapping[cluster]) %>%
+  arrange(cluster)
+
+# Tabla con medias reordenadas
+knitr::kable(cluster_summary, digits = 2)
