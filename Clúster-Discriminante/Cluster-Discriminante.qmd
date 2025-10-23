@@ -1,0 +1,92 @@
+```{r}
+#| label: clust_prep
+#| warning: false
+#| message: false
+
+# Librerías necesarias
+library(tidyverse)    # manipulación de datos y ggplot2
+library(cluster)      # silhouette, pam, etc.
+library(factoextra)   # funciones para visualizar clustering y gap statistic
+library(NbClust)      # selección de k por múltiples índices
+library(clusterCrit)  # índices de validación (opcional)
+library(dendextend)   # manipular dendrogramas
+library(knitr)        # kable()
+library(kableExtra)   # estilo de tablas
+library(clustertend)  # get_clust_tendency (Hopkins)
+
+# Cargar dataset y preparar
+data("USArrests")
+A_raw <- USArrests %>% as_tibble(rownames = "region")
+
+# Guardar copia original para auditoría
+A_orig <- A_raw
+
+# Selección de variables numéricas y escalado (estandarizar)
+num_vars <- A_raw %>% select(Murder, Assault, UrbanPop, Rape)
+num_scaled <- scale(num_vars) %>% as_tibble() %>% setNames(colnames(num_vars))
+```
+
+## Preparación de la matriz para clustering
+
+```{r}
+#| label: tbl-clust-prep
+#| tbl-cap: "Resumen numérico de variables para clustering"
+#| warning: false
+#| message: false
+
+summary_tbl <- num_vars %>%
+summarise(across(everything(), list(mean = ~mean(.), sd = ~sd(.),
+min = ~min(.), max = ~max(.)))) %>%
+pivot_longer(everything(), names_to = c("variable","stat"), names_sep = "_") %>%
+pivot_wider(names_from = stat, values_from = value) %>%
+select(variable, mean, sd, min, max)
+
+knitr::kable(summary_tbl, digits = 3)
+
+
+```{r}
+#| label: tbl-clust-hopkins
+#| warning: false
+#| message: false
+#| tbl-cap: "Test de tendencia al agrupamiento (Hopkins)"
+
+# Hopkins
+set.seed(42)
+hopkins_stat <- get_clust_tendency(num_scaled, n = nrow(num_scaled) - 1, 
+                                   graph =FALSE)$hopkins_stat
+
+hopkins_res <- tibble(test = "Hopkins", value = round(hopkins_stat, 3))
+knitr::kable(hopkins_res, caption = "")
+## Elección del número de clusters (validación)
+
+```{r}
+#| label: tbl-clust-k
+#| tbl-cap: "Silhouette promedio por número de clusters (k)"
+#| warning: false
+#| message: false
+
+# Distancia Euclidiana y Ward.D2
+dist_mat <- dist(num_scaled, method = "euclidean")
+hc <- hclust(dist_mat, method = "ward.D2")
+
+# Silhouette promedio para k = 2..6 (kmeans)
+sil_vals <- tibble(k = 2:6, sil_avg = NA_real_)
+for (k in 2:6) {
+km <- kmeans(num_scaled, centers = k, nstart = 50)
+sil <- silhouette(km$cluster, dist_mat)
+sil_vals$sil_avg[sil_vals$k == k] <- mean(sil[, 3])
+}
+knitr::kable(sil_vals, digits = 3)
+```
+
+```{r}
+#| label: fig-clust-gap
+#| fig-cap: "Análisis del Gap statistic"
+#| warning: false
+#| message: false
+
+# Gap statistic
+set.seed(42)
+gap <- clusGap(num_scaled, FUN = kmeans, K.max = 6, B = 50)
+fviz_gap_stat(gap)  # figura
+```
