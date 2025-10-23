@@ -145,3 +145,49 @@ cluster_summary <- cluster_summary %>%
 
 # Tabla con medias reordenadas
 knitr::kable(cluster_summary, digits = 2)
+## Clustering jerárquico (HC)
+
+```{r}
+#| label: tbl-hc-summary
+#| tbl-cap: "Resumen comparativo de variables por clúster (clustering jerárquico)"
+#| warning: false
+#| message: false
+
+# Cortar el dendrograma en 2 grupos
+grupos_hc <- cutree(hc, k = 2)
+
+# Calcular medias estandarizadas por grupo
+hc_summary <- num_scaled %>%
+  mutate(cluster = grupos_hc) %>%
+  pivot_longer(-cluster, names_to = "variable", values_to = "valor") %>%
+  group_by(cluster, variable) %>%
+  summarise(mean = mean(valor), .groups = "drop") %>%
+  pivot_wider(names_from = variable, values_from = mean)
+
+# Mostrar tabla resumen
+knitr::kable(hc_summary, digits = 2)
+
+```
+```{r}
+#| label: fig-clust-dend
+#| fig-cap: "Dendrograma (clustering jerárquico, método Ward.D2 sobre variables estandarizadas)"
+
+# Asignar colores según interpretación previa
+colores <- c("firebrick", "forestgreen")
+
+# Graficar dendrograma
+plot(hc, hang = -1, labels = A_raw$region,
+     main = "Dendrograma - Ward.D2",
+     xlab = "", sub = "")
+
+# Dibujar rectángulos de los dos clústeres
+rect.hclust(hc, k = 2, border = colores)
+
+# Agregar leyenda
+legend("topright",
+       legend = c("Cluster 1: alta criminalidad", 
+                  "Cluster 2: baja criminalidad"),
+       col = colores,
+       lwd = 3, cex = 0.9, box.lwd = 0.8, bg = "white")
+
+```
