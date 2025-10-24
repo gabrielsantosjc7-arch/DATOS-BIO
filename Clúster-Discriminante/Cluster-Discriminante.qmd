@@ -284,3 +284,94 @@ pairs(A[, 1:4],
       main = "Diagramas de dispersión por grupo")
 
 ```
+## Análisis discriminante (LDA)
+
+```{r}
+#| label: tbl-lda-greedy
+#| tbl-cap: "Selección secuencial de variables discriminantes mediante el criterio de Wilks"
+#| warning: false
+#| message: false
+
+# Selección de variables mediante criterio de Wilks
+lda_greedy <- greedy.wilks(Species ~ Sepal.Length + Sepal.Width + 
+              Petal.Length + Petal.Width, data = A, niveau = 0.05)
+
+# Extraer resultados del objeto
+lda_greedy_tbl <- as.data.frame(lda_greedy$results)
+
+# Renombrar columnas y redondear
+colnames(lda_greedy_tbl) <- c("Variable", "Wilks_lambda", "F_global", 
+                      "p_global", "F_parcial", "p_parcial")
+
+lda_greedy_tbl <- lda_greedy_tbl %>%
+  dplyr::mutate(across(where(is.numeric), round, 3))
+
+# Mostrar tabla
+knitr::kable(lda_greedy_tbl)
+
+
+```{r}
+#| label: tbl-lda-modelo
+#| tbl-cap: "Modelo de Análisis Discriminante Lineal (LDA) ajustado con las variables de pétalo"
+#| warning: false
+#| message: false
+
+# Ejecutar el Análisis Discriminante Lineal
+DL <- lda(Species ~ Petal.Length + Petal.Width, data = iris)
+
+# Convertir las medias y coeficientes en tabla legible
+lda_model_tbl <- as.data.frame(DL$scaling) %>%
+  tibble::rownames_to_column("Variable") %>%
+  dplyr::mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(lda_model_tbl)
+
+
+
+```{r}
+#| label: tbl-lda-prediccion
+#| tbl-cap: "Matriz de confusión y medidas de desempeño del modelo LDA"
+#| warning: false
+#| message: false
+
+# Predicción y matriz de confusión
+P <- predict(DL)
+conf_mat <- table("Clase predicha" = P$class, "Clase real" = iris$Species)
+
+# Calcular métricas
+exactitud <- mean(P$class == iris$Species)
+error <- 1 - exactitud
+
+# Mostrar tabla
+knitr::kable(conf_mat)
+
+# Guardar valores para el texto siguiente
+acc_val <- round(exactitud * 100, 2)
+err_val <- round(error * 100, 2)
+
+
+```{r}
+#| label: fig-lda-densidad
+#| echo: true
+#| fig-cap: "Distribución de las funciones discriminantes por especie."
+#| warning: false
+#| message: false
+
+DL.data <- data.frame(iris, LD1 = P$x[,1], LD2 = P$x[,2])
+
+ggplot(DL.data, aes(x = LD1, fill = Species)) +
+  geom_density(alpha = 0.4) +
+  labs(x = "Discriminante 1", y = "Densidad") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme_classic()
+
+
+```{r}
+#| label: fig-lda-partimat
+#| echo: true
+#| fig-cap: "Región de decisión según el modelo discriminante lineal."
+
+partimat(Species ~ Petal.Length + Petal.Width, data = iris,
+         method = "lda", col.mean = "red",
+         image.colors = c("skyblue", "lightgreen", "pink"))
+
