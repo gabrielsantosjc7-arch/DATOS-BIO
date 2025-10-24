@@ -249,16 +249,16 @@
 
 \section{Contexto del proyecto}\label{contexto-del-proyecto}
 
-La finalidad de esta guía es mostrar un flujo reproducible y profesional
-para realizar análisis de agrupamiento (clustering) sobre variables
-continuas en un contexto ambiental/biológico. Aprenderás a preparar los
-datos, establecer la tendencia a agruparse, seleccionar el número óptimo
-de clústeres, ejecutar clustering jerárquico y particional (k-means),
-evaluar la calidad del agrupamiento y describir los grupos desde el
-punto de vista estadístico y práctico.
+Se realiza análisis de agrupamiento (clustering) sobre variables
+continuas en un contexto social. Se evalua la tendencia a agruparse, se
+seleccionan el número óptimo de clústeres, se ejecuta clustering
+jerárquico y particional (k-means). Por otro lado, se construye un
+modelo que discrimine correctamente entre las especies a partir de sus
+características morfológicas, evaluando los supuestos del método,
+seleccionando las variables más relevantes y visualizando la capacidad
+de clasificación del modelo.
 
-\section{Carga de librerías y
-dataset}\label{carga-de-libreruxedas-y-dataset}
+\section{Carga de librerías}\label{carga-de-libreruxedas}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -272,7 +272,19 @@ dataset}\label{carga-de-libreruxedas-y-dataset}
 \FunctionTok{library}\NormalTok{(knitr)        }\CommentTok{\# kable()}
 \FunctionTok{library}\NormalTok{(kableExtra)   }\CommentTok{\# estilo de tablas}
 \FunctionTok{library}\NormalTok{(clustertend)  }\CommentTok{\# get\_clust\_tendency (Hopkins)}
+\FunctionTok{library}\NormalTok{(MASS)         }\CommentTok{\# lda()}
+\FunctionTok{library}\NormalTok{(MVN)          }\CommentTok{\# Supuestos de normalidad multivariada}
+\FunctionTok{library}\NormalTok{(biotools)     }\CommentTok{\# boxM() {-} homocedasticidad}
+\FunctionTok{library}\NormalTok{(rstatix)      }\CommentTok{\# cor\_test() {-} multicolinealidad}
+\FunctionTok{library}\NormalTok{(klaR)         }\CommentTok{\# greedy.wilks() y partimat()}
+\end{Highlighting}
+\end{Shaded}
 
+\section{Preparación de la matriz para
+clustering}\label{preparaciuxf3n-de-la-matriz-para-clustering}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
 \CommentTok{\# Cargar dataset y preparar}
 \FunctionTok{data}\NormalTok{(}\StringTok{"USArrests"}\NormalTok{)}
 \NormalTok{A\_raw }\OtherTok{\textless{}{-}}\NormalTok{ USArrests }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as\_tibble}\NormalTok{(}\AttributeTok{rownames =} \StringTok{"region"}\NormalTok{)}
@@ -283,14 +295,7 @@ dataset}\label{carga-de-libreruxedas-y-dataset}
 \CommentTok{\# Selección de variables numéricas y escalado (estandarizar)}
 \NormalTok{num\_vars }\OtherTok{\textless{}{-}}\NormalTok{ A\_raw }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(Murder, Assault, UrbanPop, Rape)}
 \NormalTok{num\_scaled }\OtherTok{\textless{}{-}} \FunctionTok{scale}\NormalTok{(num\_vars) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as\_tibble}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{setNames}\NormalTok{(}\FunctionTok{colnames}\NormalTok{(num\_vars))}
-\end{Highlighting}
-\end{Shaded}
 
-\section{Preparación de la matriz para
-clustering}\label{preparaciuxf3n-de-la-matriz-para-clustering}
-
-\begin{Shaded}
-\begin{Highlighting}[numbers=left,,]
 \NormalTok{summary\_tbl }\OtherTok{\textless{}{-}}\NormalTok{ num\_vars }\SpecialCharTok{\%\textgreater{}\%}
 \FunctionTok{summarise}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\FunctionTok{list}\NormalTok{(}\AttributeTok{mean =} \SpecialCharTok{\textasciitilde{}}\FunctionTok{mean}\NormalTok{(.), }\AttributeTok{sd =} \SpecialCharTok{\textasciitilde{}}\FunctionTok{sd}\NormalTok{(.),}
 \AttributeTok{min =} \SpecialCharTok{\textasciitilde{}}\FunctionTok{min}\NormalTok{(.), }\AttributeTok{max =} \SpecialCharTok{\textasciitilde{}}\FunctionTok{max}\NormalTok{(.)))) }\SpecialCharTok{\%\textgreater{}\%}
@@ -394,9 +399,6 @@ diferencian en grupos muy definidos según las variables de criminalidad
 y urbanización, aunque podrían existir subgrupos moderadamente
 diferenciados que justifiquen la aplicación de métodos de clustering
 exploratorio.
-
-\section{Elección del número de clusters
-(validación)}\label{elecciuxf3n-del-nuxfamero-de-clusters-validaciuxf3n}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -713,8 +715,461 @@ En conjunto, los resultados muestran una división clara entre estados
 con baja criminalidad y aquellos con niveles más altos, que coincide
 parcialmente con un gradiente geográfico norte--sur.
 
+\section{Verificación de supuestos
+(LDA)}\label{verificaciuxf3n-de-supuestos-lda}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Dataset iris}
+\FunctionTok{data}\NormalTok{(iris)}
+\NormalTok{A }\OtherTok{\textless{}{-}}\NormalTok{ iris}
+\NormalTok{A}\SpecialCharTok{$}\NormalTok{Species }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(A}\SpecialCharTok{$}\NormalTok{Species)}
+
+\CommentTok{\# Prueba de normalidad multivariada por especie (Mardia)}
+\NormalTok{lda\_mvn\_mult }\OtherTok{\textless{}{-}} \FunctionTok{lapply}\NormalTok{(}
+  \FunctionTok{levels}\NormalTok{(A}\SpecialCharTok{$}\NormalTok{Species),}
+  \ControlFlowTok{function}\NormalTok{(sp) \{}
+\NormalTok{    res }\OtherTok{\textless{}{-}}\NormalTok{ MVN}\SpecialCharTok{::}\FunctionTok{mvn}\NormalTok{(}
+      \FunctionTok{subset}\NormalTok{(A, Species }\SpecialCharTok{==}\NormalTok{ sp)[, }\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{],}
+      \AttributeTok{mvn\_test =} \StringTok{"mardia"}\NormalTok{,}
+      \AttributeTok{descriptives =} \ConstantTok{FALSE}\NormalTok{,}
+      \AttributeTok{tidy =} \ConstantTok{TRUE}
+\NormalTok{    )}\SpecialCharTok{$}\NormalTok{multivariate\_normality}
+    \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{Especie =}\NormalTok{ sp, res)}
+\NormalTok{  \}}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{bind\_rows}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(Especie, Test, Statistic, p.value, MVN) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(lda\_mvn\_mult)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llrrl@{}}
+
+\caption{\label{tbl-lda-mvn-mult}Normalidad multivariada por especie
+(test de Mardia)}
+
+\tabularnewline
+
+\toprule\noalign{}
+Especie & Test & Statistic & p.value & MVN \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+setosa & Mardia Skewness & 25.664 & 0.177 & ✓ Normal \\
+setosa & Mardia Kurtosis & 1.295 & 0.195 & ✓ Normal \\
+versicolor & Mardia Skewness & 25.185 & 0.194 & ✓ Normal \\
+versicolor & Mardia Kurtosis & -0.572 & 0.567 & ✓ Normal \\
+virginica & Mardia Skewness & 26.271 & 0.157 & ✓ Normal \\
+virginica & Mardia Kurtosis & 0.153 & 0.879 & ✓ Normal \\
+
+\end{longtable}
+
+La Tabla~\ref{tbl-lda-mvn-mult} presenta los resultados del test de
+Mardia aplicado a cada especie del conjunto \emph{iris}. En todas las
+especies, los valores p son superiores a 0.05, lo que sugiere que los
+datos se aproximan a la normalidad multivariada.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Prueba de normalidad univariada (Anderson–Darling)}
+\NormalTok{lda\_mvn\_uni }\OtherTok{\textless{}{-}} \FunctionTok{lapply}\NormalTok{(}
+  \FunctionTok{levels}\NormalTok{(A}\SpecialCharTok{$}\NormalTok{Species),}
+  \ControlFlowTok{function}\NormalTok{(sp) \{}
+\NormalTok{    res }\OtherTok{\textless{}{-}}\NormalTok{ MVN}\SpecialCharTok{::}\FunctionTok{mvn}\NormalTok{(}
+      \FunctionTok{subset}\NormalTok{(A, Species }\SpecialCharTok{==}\NormalTok{ sp)[, }\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{],}
+      \AttributeTok{mvn\_test =} \StringTok{"mardia"}\NormalTok{,          }\CommentTok{\# Obligatorio, pero lo ignoramos}
+      \AttributeTok{univariate\_test =} \StringTok{"AD"}\NormalTok{,}
+      \AttributeTok{descriptives =} \ConstantTok{FALSE}\NormalTok{,}
+      \AttributeTok{tidy =} \ConstantTok{TRUE}
+\NormalTok{    )}\SpecialCharTok{$}\NormalTok{univariate\_normality}
+    
+    \CommentTok{\# Asegurar formato compatible}
+\NormalTok{    res}\SpecialCharTok{$}\NormalTok{p.value }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(res}\SpecialCharTok{$}\NormalTok{p.value)}
+    \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{Especie =}\NormalTok{ sp, res)}
+\NormalTok{  \}}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{bind\_rows}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(Especie, Test, Variable, Statistic, p.value, Normality)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(lda\_mvn\_uni)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1528}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2361}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1806}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1389}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1111}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1806}}@{}}
+
+\caption{\label{tbl-lda-mvn-uni}Normalidad univariada por especie (test
+de Anderson--Darling)}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Especie
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Variable
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Normality
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+setosa & Anderson-Darling & Sepal.Length & 0.408 & 0.335 & ✓ Normal \\
+setosa & Anderson-Darling & Sepal.Width & 0.491 & 0.21 & ✓ Normal \\
+setosa & Anderson-Darling & Petal.Length & 1.007 & 0.011 & ✗ Not
+normal \\
+setosa & Anderson-Darling & Petal.Width & 4.715 & \textless0.001 & ✗ Not
+normal \\
+versicolor & Anderson-Darling & Sepal.Length & 0.361 & 0.433 & ✓
+Normal \\
+versicolor & Anderson-Darling & Sepal.Width & 0.560 & 0.141 & ✓
+Normal \\
+versicolor & Anderson-Darling & Petal.Length & 0.555 & 0.145 & ✓
+Normal \\
+versicolor & Anderson-Darling & Petal.Width & 0.957 & 0.014 & ✗ Not
+normal \\
+virginica & Anderson-Darling & Sepal.Length & 0.552 & 0.148 & ✓
+Normal \\
+virginica & Anderson-Darling & Sepal.Width & 0.618 & 0.102 & ✓ Normal \\
+virginica & Anderson-Darling & Petal.Length & 0.609 & 0.107 & ✓
+Normal \\
+virginica & Anderson-Darling & Petal.Width & 0.739 & 0.051 & ✓ Normal \\
+
+\end{longtable}
+
+La Tabla~\ref{tbl-lda-mvn-uni} muestra las pruebas de Anderson--Darling
+para cada variable dentro de cada grupo. En general, la mayoría de las
+variables cumplen el supuesto de normalidad univariada, aunque se
+observan algunas desviaciones leves en \emph{Petal.Length} y
+\emph{Petal.Width} para \emph{setosa}, y en \emph{Petal.Width} para
+\emph{versicolor}.
+
+Dado que el análisis discriminante lineal es relativamente robusto a
+pequeñas violaciones de normalidad, estos resultados permiten considerar
+que el supuesto se cumple de forma aceptable para aplicar el modelo LDA.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Prueba de homogeneidad de matrices de covarianza}
+\NormalTok{lda\_boxm }\OtherTok{\textless{}{-}}\NormalTok{ biotools}\SpecialCharTok{::}\FunctionTok{boxM}\NormalTok{(A[, }\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{], }\AttributeTok{grouping =}\NormalTok{ A}\SpecialCharTok{$}\NormalTok{Species)}
+
+\CommentTok{\# Tabla resumen con valores principales}
+\NormalTok{lda\_boxm\_summary }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+\NormalTok{  Estadístico }\OtherTok{=} \StringTok{"Chi{-}cuadrado (aprox.)"}\NormalTok{,}
+  \AttributeTok{Valor =} \FunctionTok{round}\NormalTok{(lda\_boxm}\SpecialCharTok{$}\NormalTok{statistic, }\DecValTok{2}\NormalTok{),}
+  \AttributeTok{gl =}\NormalTok{ lda\_boxm}\SpecialCharTok{$}\NormalTok{parameter,}
+  \AttributeTok{p\_valor =} \FunctionTok{format.pval}\NormalTok{(lda\_boxm}\SpecialCharTok{$}\NormalTok{p.value, }\AttributeTok{digits =} \DecValTok{3}\NormalTok{, }\AttributeTok{eps =}\NormalTok{ .}\DecValTok{001}\NormalTok{)}
+\NormalTok{)}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(lda\_boxm\_summary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llrrl@{}}
+
+\caption{\label{tbl-lda-boxm}Prueba de homogeneidad de matrices de
+covarianza (Box's M test)}
+
+\tabularnewline
+
+\toprule\noalign{}
+& Estadístico & Valor & gl & p\_valor \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Chi-Sq (approx.) & Chi-cuadrado (aprox.) & 140.94 & 20 &
+\textless0.001 \\
+
+\end{longtable}
+
+La Tabla~\ref{tbl-lda-boxm} presenta los resultados de la prueba de
+homogeneidad de matrices de covarianza (Box's M test). El estadístico
+calculado es χ² ≈ 140.94 , con 20 grados de libertad y un p-valor
+\textless0.001 . Dado que el p-valor es inferior al umbral habitual de
+0.05, se concluye que las matrices de covarianza difieren
+significativamente entre las especies. Sin embargo, el análisis
+discriminante lineal (LDA) suele ser robusto frente a leves violaciones
+de este supuesto, por lo que el procedimiento puede continuar,
+interpretando los resultados con precaución.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\FunctionTok{pairs}\NormalTok{(A[, }\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{],}
+      \AttributeTok{col =}\NormalTok{ A}\SpecialCharTok{$}\NormalTok{Species,}
+      \AttributeTok{pch =} \DecValTok{19}\NormalTok{,}
+      \AttributeTok{main =} \StringTok{"Diagramas de dispersión por grupo"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{Cluster-Discriminante_files/figure-pdf/fig-lda-linealidad-1.pdf}}
+
+}
+
+\caption{\label{fig-lda-linealidad}Relaciones bivariadas entre variables
+del conjunto \emph{iris} por especie (evaluación de linealidad)}
+
+\end{figure}%
+
+La Figura~\ref{fig-lda-linealidad} permite evaluar visualmente el
+supuesto de linealidad entre las variables predictoras dentro de cada
+grupo de especies. En general, las relaciones entre pares de variables
+muestran patrones aproximadamente lineales, aunque con algunas
+diferencias en pendiente y dispersión entre especies, especialmente en
+las combinaciones que involucran \emph{Petal.Length} y
+\emph{Petal.Width}.
+
+Estas observaciones sugieren que el supuesto de linealidad se cumple de
+manera razonable, por lo que el modelo LDA puede aplicarse sin requerir
+transformaciones adicionales.
+
 \section{Análisis discriminante
 (LDA)}\label{anuxe1lisis-discriminante-lda}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Selección de variables mediante criterio de Wilks}
+\NormalTok{lda\_greedy }\OtherTok{\textless{}{-}} \FunctionTok{greedy.wilks}\NormalTok{(Species }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Sepal.Length }\SpecialCharTok{+}\NormalTok{ Sepal.Width }\SpecialCharTok{+} 
+\NormalTok{              Petal.Length }\SpecialCharTok{+}\NormalTok{ Petal.Width, }\AttributeTok{data =}\NormalTok{ A, }\AttributeTok{niveau =} \FloatTok{0.05}\NormalTok{)}
+
+\CommentTok{\# Extraer resultados del objeto}
+\NormalTok{lda\_greedy\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(lda\_greedy}\SpecialCharTok{$}\NormalTok{results)}
+
+\CommentTok{\# Renombrar columnas y redondear}
+\FunctionTok{colnames}\NormalTok{(lda\_greedy\_tbl) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"Variable"}\NormalTok{, }\StringTok{"Wilks\_lambda"}\NormalTok{, }\StringTok{"F\_global"}\NormalTok{, }
+                      \StringTok{"p\_global"}\NormalTok{, }\StringTok{"F\_parcial"}\NormalTok{, }\StringTok{"p\_parcial"}\NormalTok{)}
+
+\NormalTok{lda\_greedy\_tbl }\OtherTok{\textless{}{-}}\NormalTok{ lda\_greedy\_tbl }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
+
+\CommentTok{\# Mostrar tabla}
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(lda\_greedy\_tbl)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+
+\caption{\label{tbl-lda-greedy}Selección secuencial de variables
+discriminantes mediante el criterio de Wilks}
+
+\tabularnewline
+
+\toprule\noalign{}
+Variable & Wilks\_lambda & F\_global & p\_global & F\_parcial &
+p\_parcial \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Petal.Length & 0.059 & 1180.161 & 0 & 1180.161 & 0.00 \\
+Sepal.Width & 0.037 & 307.105 & 0 & 43.035 & 0.00 \\
+Petal.Width & 0.025 & 257.503 & 0 & 34.569 & 0.00 \\
+Sepal.Length & 0.023 & 199.145 & 0 & 4.721 & 0.01 \\
+
+\end{longtable}
+
+La Tabla~\ref{tbl-lda-greedy} presenta el proceso de selección de
+variables discriminantes utilizando el criterio secuencial de Wilks
+(función \emph{greedy.wilks}).La variable con mayor poder discriminante
+es \emph{Petal.Length}, por su menor valor de Wilks' λ (0.059) y su
+elevado estadístico F (1180.161, p = 0.00). En conjunto, las medidas de
+los pétalos (\emph{Petal.Length} y \emph{Petal.Width}) muestran una
+capacidad claramente superior para separar las especies, mientras que
+las dimensiones del sépalo (\emph{Sepal.Length} y \emph{Sepal.Width})
+contribuyen de forma complementaria, aunque con menor influencia en la
+discriminación total.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Ejecutar el Análisis Discriminante Lineal}
+\NormalTok{DL }\OtherTok{\textless{}{-}} \FunctionTok{lda}\NormalTok{(Species }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Petal.Length }\SpecialCharTok{+}\NormalTok{ Petal.Width, }\AttributeTok{data =}\NormalTok{ iris)}
+
+\CommentTok{\# Convertir las medias y coeficientes en tabla legible}
+\NormalTok{lda\_model\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(DL}\SpecialCharTok{$}\NormalTok{scaling) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tibble}\SpecialCharTok{::}\FunctionTok{rownames\_to\_column}\NormalTok{(}\StringTok{"Variable"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), round, }\DecValTok{3}\NormalTok{))}
+
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(lda\_model\_tbl)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrr@{}}
+
+\caption{\label{tbl-lda-modelo}Modelo de Análisis Discriminante Lineal
+(LDA) ajustado con las variables de pétalo}
+
+\tabularnewline
+
+\toprule\noalign{}
+Variable & LD1 & LD2 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Petal.Length & 1.544 & -2.161 \\
+Petal.Width & 2.402 & 5.043 \\
+
+\end{longtable}
+
+El modelo de la Tabla~\ref{tbl-lda-modelo} se ajustó utilizando las
+variables de los pétalos (\emph{Petal.Length} y \emph{Petal.Width}),
+previamente identificadas como las más relevantes según el criterio de
+Wilks. Estos valores indican que ambas variables contribuyen de manera
+importante a la separación entre especies, pero \emph{Petal.Width}
+presenta una mayor influencia en ambas funciones discriminantes
+(especialmente en LD2), lo que refuerza su papel clave en la
+diferenciación entre las especies \emph{setosa}, \emph{versicolor} y
+\emph{virginica}.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{\# Predicción y matriz de confusión}
+\NormalTok{P }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(DL)}
+\NormalTok{conf\_mat }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(}\StringTok{"Clase predicha"} \OtherTok{=}\NormalTok{ P}\SpecialCharTok{$}\NormalTok{class, }\StringTok{"Clase real"} \OtherTok{=}\NormalTok{ iris}\SpecialCharTok{$}\NormalTok{Species)}
+
+\CommentTok{\# Calcular métricas}
+\NormalTok{exactitud }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(P}\SpecialCharTok{$}\NormalTok{class }\SpecialCharTok{==}\NormalTok{ iris}\SpecialCharTok{$}\NormalTok{Species)}
+\NormalTok{error }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ exactitud}
+
+\CommentTok{\# Mostrar tabla}
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(conf\_mat)}
+\CommentTok{\# Guardar valores para el texto siguiente}
+\NormalTok{acc\_val }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(exactitud }\SpecialCharTok{*} \DecValTok{100}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+\NormalTok{err\_val }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(error }\SpecialCharTok{*} \DecValTok{100}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+
+\caption{\label{tbl-lda-prediccion}Matriz de confusión y medidas de
+desempeño del modelo LDA}
+
+\tabularnewline
+
+\toprule\noalign{}
+& setosa & versicolor & virginica \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+setosa & 50 & 0 & 0 \\
+versicolor & 0 & 48 & 4 \\
+virginica & 0 & 2 & 46 \\
+
+\end{longtable}
+
+La Tabla~\ref{tbl-lda-prediccion} muestra la matriz de confusión
+obtenida al aplicar el modelo discriminante lineal sobre el conjunto de
+datos \emph{iris}. El modelo logra una exactitud del 96 \% y un error
+del 4 \%, lo que indica un desempeño sobresaliente.
+
+La especie \emph{setosa} se clasificó correctamente en los 50 casos.
+\emph{Versicolor} se identificó correctamente en 48 observaciones,
+aunque 4 fueron clasificadas erróneamente como \emph{virginica}. Por su
+parte, \emph{virginica} tuvo 46 clasificaciones correctas y 2
+confusiones con \emph{versicolor}. Estos resultados confirman la alta
+capacidad discriminante de las variables de los pétalos para distinguir
+entre las tres especies del conjunto \emph{iris}.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\NormalTok{DL.data }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(iris, }\AttributeTok{LD1 =}\NormalTok{ P}\SpecialCharTok{$}\NormalTok{x[,}\DecValTok{1}\NormalTok{], }\AttributeTok{LD2 =}\NormalTok{ P}\SpecialCharTok{$}\NormalTok{x[,}\DecValTok{2}\NormalTok{])}
+
+\FunctionTok{ggplot}\NormalTok{(DL.data, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ LD1, }\AttributeTok{fill =}\NormalTok{ Species)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_density}\NormalTok{(}\AttributeTok{alpha =} \FloatTok{0.4}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Discriminante 1"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Densidad"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_brewer}\NormalTok{(}\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_classic}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{Cluster-Discriminante_files/figure-pdf/fig-lda-densidad-1.pdf}}
+
+}
+
+\caption{\label{fig-lda-densidad}Distribución de las funciones
+discriminantes por especie.}
+
+\end{figure}%
+
+La Figura~\ref{fig-lda-densidad} muestra la distribución de las
+puntuaciones obtenidas para la primera función discriminante (LD1),
+diferenciadas por especie. Se observa una separación clara entre
+\emph{setosa} y las otras dos especies, con distribuciones prácticamente
+no superpuestas. En cambio, \emph{versicolor} y \emph{virginica}
+presentan un leve solapamiento, lo que sugiere que comparten
+características similares en las variables de los pétalos.
+
+Este patrón visual confirma los resultados numéricos previos, donde el
+modelo logra una alta exactitud de clasificación y las variables de los
+pétalos se destacan como los principales discriminadores entre especies.
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\FunctionTok{partimat}\NormalTok{(Species }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Petal.Length }\SpecialCharTok{+}\NormalTok{ Petal.Width, }\AttributeTok{data =}\NormalTok{ iris,}
+         \AttributeTok{method =} \StringTok{"lda"}\NormalTok{, }\AttributeTok{col.mean =} \StringTok{"red"}\NormalTok{,}
+         \AttributeTok{image.colors =} \FunctionTok{c}\NormalTok{(}\StringTok{"skyblue"}\NormalTok{, }\StringTok{"lightgreen"}\NormalTok{, }\StringTok{"pink"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{Cluster-Discriminante_files/figure-pdf/fig-lda-partimat-1.pdf}}
+
+}
+
+\caption{\label{fig-lda-partimat}Región de decisión según el modelo
+discriminante lineal.}
+
+\end{figure}%
+
+La Figura~\ref{fig-lda-partimat} representa las regiones de decisión
+generadas por el modelo discriminante lineal a partir de las variables
+\emph{Petal.Length} y \emph{Petal.Width}.
+
+Cada color delimita el espacio donde el modelo asigna una observación a
+una de las tres especies:\\
+- \textbf{Azul}: \emph{setosa}\\
+- \textbf{Verde}: \emph{versicolor}\\
+- \textbf{Rosa}: \emph{virginica}
+
+Las fronteras entre regiones reflejan las funciones discriminantes
+obtenidas en el análisis. Se aprecia que \emph{setosa} ocupa una región
+bien separada, sin solapamiento con las demás especies, lo que se
+traduce en una clasificación prácticamente perfecta.
+
+En contraste, \emph{versicolor} y \emph{virginica} muestran zonas
+contiguas con un pequeño solapamiento, en torno a valores de
+\emph{Petal.Length} entre 4.5 y 5.5 y \emph{Petal.Width} entre 1.3 y
+1.8. Esta área explica el leve error de clasificación, con una tasa de
+error aparente del 4\%, equivalente a 6 observaciones mal clasificadas
+en el conjunto de entrenamiento.
 
 \section{Conclusiones (Clúster /
 LDA)}\label{conclusiones-cluxfaster-lda}
@@ -737,6 +1192,21 @@ En conjunto, ambos métodos de agrupamiento (k-means y jerárquico)
 revelan un contraste consistente entre regiones de alta y baja
 criminalidad, evidenciando patrones geográficos y socioeconómicos
 subyacentes en los datos.
+
+El análisis discriminante lineal aplicado mostró que las medidas de los
+pétalos (\emph{Petal.Length} y \emph{Petal.Width}) poseen el mayor poder
+discriminante, siendo las principales responsables de la separación
+entre grupos. El modelo obtuvo una alta tasa de clasificación correcta
+(superior al 96\%), demostrando su efectividad para identificar las
+especies a partir de estas dos variables.
+
+Los supuestos estadísticos de normalidad y homocedasticidad se
+cumplieron razonablemente, lo que respalda la validez del modelo
+aplicado. En conjunto, el análisis confirma que las características de
+los pétalos constituyen indicadores confiables para diferenciar las
+especies de \emph{iris}, y que el método discriminante lineal es una
+herramienta adecuada y robusta para este tipo de clasificación
+biológica.
 
 
 

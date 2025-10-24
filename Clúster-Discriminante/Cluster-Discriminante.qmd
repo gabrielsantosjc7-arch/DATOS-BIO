@@ -191,3 +191,96 @@ legend("topright",
        lwd = 3, cex = 0.9, box.lwd = 0.8, bg = "white")
 
 ```
+## Verificación de supuestos (LDA)
+
+```{r}
+#| label: tbl-lda-mvn-mult
+#| tbl-cap: "Normalidad multivariada por especie (test de Mardia)"
+#| warning: false
+#| message: false
+
+# Dataset iris
+data(iris)
+A <- iris
+A$Species <- factor(A$Species)
+
+# Prueba de normalidad multivariada por especie (Mardia)
+lda_mvn_mult <- lapply(
+  levels(A$Species),
+  function(sp) {
+    res <- MVN::mvn(
+      subset(A, Species == sp)[, 1:4],
+      mvn_test = "mardia",
+      descriptives = FALSE,
+      tidy = TRUE
+    )$multivariate_normality
+    data.frame(Especie = sp, res)
+  }
+) %>%
+  dplyr::bind_rows() %>%
+  dplyr::select(Especie, Test, Statistic, p.value, MVN) %>%
+  dplyr::mutate(across(where(is.numeric), round, 3))
+
+knitr::kable(lda_mvn_mult)
+
+```{r}
+#| label: tbl-lda-mvn-uni
+#| tbl-cap: "Normalidad univariada por especie (test de Anderson–Darling)"
+#| warning: false
+#| message: false
+
+# Prueba de normalidad univariada (Anderson–Darling)
+lda_mvn_uni <- lapply(
+  levels(A$Species),
+  function(sp) {
+    res <- MVN::mvn(
+      subset(A, Species == sp)[, 1:4],
+      mvn_test = "mardia",          # Obligatorio, pero lo ignoramos
+      univariate_test = "AD",
+      descriptives = FALSE,
+      tidy = TRUE
+    )$univariate_normality
+    
+    # Asegurar formato compatible
+    res$p.value <- as.character(res$p.value)
+    data.frame(Especie = sp, res)
+  }
+) %>%
+  dplyr::bind_rows() %>%
+  dplyr::select(Especie, Test, Variable, Statistic, p.value, Normality)
+
+knitr::kable(lda_mvn_uni)
+
+
+```{r}
+#| label: tbl-lda-boxm
+#| tbl-cap: "Prueba de homogeneidad de matrices de covarianza (Box's M test)"
+#| warning: false
+#| message: false
+
+# Prueba de homogeneidad de matrices de covarianza
+lda_boxm <- biotools::boxM(A[, 1:4], grouping = A$Species)
+
+# Tabla resumen con valores principales
+lda_boxm_summary <- data.frame(
+  Estadístico = "Chi-cuadrado (aprox.)",
+  Valor = round(lda_boxm$statistic, 2),
+  gl = lda_boxm$parameter,
+  p_valor = format.pval(lda_boxm$p.value, digits = 3, eps = .001)
+)
+
+knitr::kable(lda_boxm_summary)
+
+
+```{r}
+#| label: fig-lda-linealidad
+#| fig-cap: "Relaciones bivariadas entre variables del conjunto *iris* por especie (evaluación de linealidad)"
+#| fig-width: 7
+#| fig-height: 6
+
+pairs(A[, 1:4],
+      col = A$Species,
+      pch = 19,
+      main = "Diagramas de dispersión por grupo")
+
+```
