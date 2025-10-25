@@ -251,3 +251,164 @@ ggplot(plot_df, aes(x = Species, y = value, fill = Species)) +
   theme(legend.position = "none")
 
 ```
+## perMANOVA
+
+```{r}
+#| label: tbl-permanova
+#| tbl-cap: "Resultado perMANOVA — modelo: Sepal.Length + Sepal.Width ~ Species"
+#| echo: true
+#| warning: false
+#| message: false
+
+# perMANOVA: diferencias multivariadas entre especies
+
+# Base de datos (usa df_manova si ya la tienes del MANOVA)
+data("iris")
+df_permanova <- df_manova %>%
+  select(Sepal.Length, Sepal.Width, Species)
+
+# Ejecutar perMANOVA (distancia euclidiana)
+set.seed(123)
+permanova_res <- adonis2(df_permanova[,1:2] ~ Species,
+                         data = df_permanova,
+                         method = "euclidean")
+
+# Convertir a tibble para tabla
+permanova_tbl <- as_tibble(permanova_res, rownames = "Term") %>%
+  mutate(
+    across(where(is.numeric), ~ round(., 4)),
+    `Pr(>F)` = ifelse(`Pr(>F)` < 0.05, "< 0.05", round(`Pr(>F)`, 4))
+  )
+
+knitr::kable(permanova_tbl)
+
+```
+```{r}
+#| label: permanova-posthoc-run
+#| warning: false
+#| message: false
+#| echo: true
+#| include: false
+
+# Ejecutar pairwise.perm.manova()
+suppressMessages(
+  suppressWarnings(
+    posthoc_permanova <- RVAideMemoire::pairwise.perm.manova(
+      df_permanova[, 1:2],
+      df_permanova$Species,
+      nperm = 999,
+      p.method = "bonf"
+    )
+  )
+)
+
+```
+
+```{r}
+#| label: tbl-permanova-posthoc
+#| tbl-cap: "Comparaciones post-hoc perMANOVA (ajuste Bonferroni)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Función auxiliar que intenta extraer la matriz de p-valores de las distintas
+# estructuras que puede devolver pairwise.perm.manova()
+extract_pairwise_pvals <- function(obj) {
+  # 1) posibilidad: $P (matriz)
+  if (!is.null(obj$P)) {
+    return(as.matrix(obj$P))
+  }
+  # 2) posibilidad: $Ps
+  if (!is.null(obj$Ps)) {
+    return(as.matrix(obj$Ps))
+  }
+  # 3) posibilidad: $p.value
+  if (!is.null(obj$`p.value`)) {
+    return(as.matrix(obj$`p.value`))
+  }
+  # 4) intentar encontrar la primera matriz numérica en la lista
+  mats <- Filter(function(x) is.matrix(x) || is.data.frame(x), obj)
+  if (length(mats) > 0) {
+    mm <- as.matrix(mats[[1]])
+    # si es una matriz triangular con NAs, devolverla
+    if (is.numeric(mm)) return(mm)
+  }
+  # 5) intentar parsear la impresión textual (último recurso)
+  if (!is.null(posthoc_raw_print) && length(posthoc_raw_print) > 0) {
+    # Buscar líneas que parezcan filas de matriz (números con espacios)
+    lines <- posthoc_raw_print
+    # heurística simple: tomamos las últimas 4 líneas con números
+    nums_lines <- grep("\\d+\\.\\d+|< 0\\.0", lines, value = TRUE)
+    if (length(nums_lines) >= 1) {
+      # no es perfecto; devolvemos NULL para fallback
+      return(NULL)
+    }
+  }
+  return(NULL)
+}
+
+pv_mat <- extract_pairwise_pvals(posthoc_permanova)
+
+if (!is.null(pv_mat)) {
+  # Convertir a tabla larga
+  ptab <- as.data.frame(pv_mat) %>%
+    tibble::rownames_to_column("Especie1") %>%
+    tidyr::pivot_longer(-Especie1, names_to = "Especie2", 
+                        values_to = "pval") %>%
+    dplyr::filter(!is.na(pval) & Especie1 != Especie2) %>%
+    dplyr::mutate(
+      Comparación = paste(Especie1, Especie2, sep = " - "),
+      p.value = ifelse(as.numeric(pval) < 0.05, "< 0.05", 
+                       format(round(as.numeric(pval), 4), nsmall = 4))
+    ) %>%
+    dplyr::select(Comparación, p.value) %>%
+    dplyr::distinct()
+} else {
+  ptab <- tibble(
+    Comparación = "No se pudo extraer la matriz de p-valores 
+    del objeto devuelto",
+    p.value = "ver output crudo"
+  )
+}
+
+knitr::kable(ptab)
+
+```
+```{r}
+#| label: fig-permanova-centroides
+#| fig-cap: "Dispersión y centroides por especie — Sepal.Length vs Sepal.Width"
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+#| message: false
+#| echo: true
+
+df_permanova %>%
+  group_by(Species) %>%
+  mutate(L = mean(Sepal.Length), A = mean(Sepal.Width)) %>%
+  ggplot(aes(Sepal.Length, Sepal.Width, color = Species)) +
+  geom_point(size = 2, alpha = 0.8) +
+  geom_point(aes(x = L, y = A), size = 4, shape = 18) +
+  geom_segment(aes(xend = L, yend = A), linetype = "dashed") +
+  theme_classic() +
+  labs(x = "Sepal.Length", y = "Sepal.Width")
+
+```
+```{r}
+#| label: fig-permanova-box
+#| fig-cap: "Distribución por variable y especie (perMANOVA)"
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+#| message: false
+#| echo: true
+
+df_permanova %>%
+  pivot_longer(cols = c(Sepal.Length, Sepal.Width), 
+               names_to = "Variable", values_to = "Valor") %>%
+  ggplot(aes(Variable, Valor, fill = Species)) +
+  geom_boxplot() +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set2")
+
+```
