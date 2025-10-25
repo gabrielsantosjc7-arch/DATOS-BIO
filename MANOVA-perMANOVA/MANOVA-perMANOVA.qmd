@@ -151,3 +151,103 @@ if (nrow(outliers_tbl) == 0) {
 
 knitr::kable(outliers_tbl)
 
+## MANOVA
+
+```{r}
+#| label: tbl-manova-fit
+#| tbl-cap: "Resultado MANOVA (test de Pillai) — modelo: cbind(Sepal.LengthLog10, Sepal.WidthLog10) ~ Species"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Ejecutar MANOVA
+man_mod <- manova(cbind(Sepal.LengthLog10, Sepal.WidthLog10) ~ Species, 
+                  data = df_manova)
+
+# Intentar usar broom::tidy()
+manova_tbl <- tryCatch(
+  broom::tidy(man_mod, test = "Pillai"),
+  error = function(e) tibble()
+)
+
+# Si broom falla o no devuelve columnas esperadas → crear tabla manual
+if (nrow(manova_tbl) == 0 || !"p.value" %in% names(manova_tbl)) {
+  s <- summary(man_mod, test = "Pillai")
+  manova_tbl <- tibble(
+    term = rownames(s$stats),
+    Pillai = round(s$stats[, "Pillai"], 3),
+    approx_F = round(s$stats[, "approx F"], 3),
+    df1 = s$stats[, "df1"],
+    df2 = s$stats[, "df2"],
+    p_value = s$stats[, "Pr(>F)"]
+  )
+}
+
+# Forzar formato del p-valor (menor a 0.05)
+manova_tbl <- manova_tbl %>%
+  mutate(
+    p.value = ifelse(p.value < 0.05, "< 0.05", round(p.value, 3))
+  )
+
+knitr::kable(manova_tbl)
+
+```{r}
+#| label: tbl-manova-posthoc
+#| tbl-cap: "Comparaciones post-hoc Sepal.LengthLog10 (emmeans, ajuste Holm)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Modelo lineal y comparaciones post-hoc (emmeans)
+fit_len <- lm(Sepal.LengthLog10 ~ Species, data = df_manova)
+em_len <- emmeans(fit_len, pairwise ~ Species, adjust = "holm")
+len_comp <- as.data.frame(em_len$contrasts) %>%
+  mutate(
+    across(where(is.numeric), ~ round(., 4)),
+    p.value = ifelse(p.value < 0.05, "< 0.05", round(p.value, 4))
+  )
+
+knitr::kable(len_comp)
+```{r}
+#| label: tbl-manova-posthoc2
+#| tbl-cap: "Comparaciones post-hoc Sepal.WidthLog10 (emmeans, ajuste Holm)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Modelo lineal y comparaciones post-hoc (emmeans)
+fit_wid <- lm(Sepal.WidthLog10 ~ Species, data = df_manova)
+em_wid <- emmeans(fit_wid, pairwise ~ Species, adjust = "holm")
+wid_comp <- as.data.frame(em_wid$contrasts) %>%
+  mutate(
+    across(where(is.numeric), ~ round(., 4)),
+    p.value = ifelse(p.value < 0.05, "< 0.05", round(p.value, 4))
+  )
+
+knitr::kable(wid_comp)
+
+```{r}
+#| label: fig-manova-means
+#| fig-cap: "Medias (log10) por especie — Sepal.LengthLog10 y Sepal.WidthLog10"
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+#| message: false
+#| echo: true
+
+# Preparar datos para gráfico
+plot_df <- df_manova %>%
+  select(Species, Sepal.LengthLog10, Sepal.WidthLog10) %>%
+  pivot_longer(-Species, names_to = "variable", values_to = "value")
+
+ggplot(plot_df, aes(x = Species, y = value, fill = Species)) +
+  stat_summary(fun = mean, geom = "bar", 
+               position = position_dodge(width = 0.8)) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+               position = position_dodge(width = 0.8), 
+               width = 0.2) +
+  facet_wrap(~variable, scales = "free_y") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+```
