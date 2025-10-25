@@ -1,0 +1,153 @@
+## Preparación MANOVA
+
+```{r}
+#| label: manova_prep
+#| echo: true
+#| warning: false
+#| message: false
+
+# Datos
+data("iris")
+df_manova <- iris %>% as_tibble()
+
+# Transformaciones propuestas: log10 de Sepal.Length y Sepal.Width
+df_manova <- df_manova %>%
+  mutate(
+    Sepal.LengthLog10 = log10(Sepal.Length),
+    Sepal.WidthLog10  = log10(Sepal.Width)
+  )
+
+```
+
+## Verificación de supuestos
+
+```{r}
+#| label: tbl-manova-mvn-mult
+#| tbl-cap: "Normalidad multivariada por especie (test de Mardia)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Función segura para extraer resultados MVN::mvn en formato consistente
+mvn_by_group <- function(data, group_var, vars) {
+  groups <- unique(data[[group_var]])
+  out <- map_dfr(groups, function(g) {
+    sub <- data %>% filter((!!sym(group_var)) == g) %>% select(all_of(vars))
+    # usamos mvn con mvn_test = "mardia", univariate_test = "AD" 
+    res <- tryCatch(
+      MVN::mvn(sub, mvn_test = "mardia", univariate_test = "AD", 
+               descriptives = FALSE, tidy = TRUE),
+      error = function(e) return(NULL)
+    )
+    if (is.null(res)) {
+      tibble(Especie = as.character(g), Test = NA, Statistic = NA, 
+             p.value = NA, MVN = NA)
+    } else {
+      df <- res$multivariate_normality
+      tibble(
+        Especie = as.character(g),
+        Test = df$Test,
+        Statistic = round(as.numeric(df$Statistic), 3),
+        p.value = ifelse(df$p.value < 0.001, "< 0.001", 
+                         round(as.numeric(df$p.value), 3)),
+        MVN = df$MVN
+      )
+    }
+  })
+  out
+}
+
+vars_manova <- c("Sepal.LengthLog10", "Sepal.WidthLog10")
+lda_mvn_mult_tbl <- mvn_by_group(df_manova, "Species", vars_manova)
+knitr::kable(lda_mvn_mult_tbl)
+```{r}
+#| label: tbl-manova-mvn-uni
+#| tbl-cap: "Normalidad univariada por especie (Anderson–Darling)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Extraer univar de MVN::mvn por especie (AD)
+mvn_univar_by_group <- function(data, group_var, vars) {
+  groups <- unique(data[[group_var]])
+  map_dfr(groups, function(g) {
+    sub <- data %>% filter((!!sym(group_var)) == g) %>% select(all_of(vars))
+    res <- tryCatch(
+      MVN::mvn(sub, mvn_test = "mardia", univariate_test = "AD", 
+               descriptives = FALSE, tidy = TRUE),
+      error = function(e) return(NULL)
+    )
+    if (is.null(res)) {
+      tibble(Especie = as.character(g), Test = NA, Variable = NA, 
+             Statistic = NA, p.value = NA, Normality = NA)
+    } else {
+      df <- res$univariate_normality %>% as_tibble()
+      df %>%
+        mutate(Especie = as.character(g),
+               p.value = ifelse(p.value < 0.001, "< 0.001", 
+                                round(as.numeric(p.value), 3))) %>%
+        select(Especie, Test, Variable, Statistic, 
+               p.value, Normality)
+    }
+  })
+}
+
+lda_mvn_uni_tbl <- mvn_univar_by_group(df_manova, "Species", vars_manova)
+knitr::kable(lda_mvn_uni_tbl)
+
+```{r}
+#| label: tbl-manova-boxm
+#| tbl-cap: "Test de Box: homogeneidad de matrices de covarianza (variables log10)"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Box's M sobre las dos variables transformadas
+boxm_res <- boxM(
+  df_manova %>% select(Sepal.LengthLog10, Sepal.WidthLog10),
+  grouping = df_manova$Species
+)
+
+# Extraer y presentar en formato tabla
+boxm_tbl <- tibble(
+  Estadistico = "Chi-sq (aprox.)",
+  Valor = round(boxm_res$statistic, 2),
+  df = boxm_res$parameter,
+  p_value = ifelse(boxm_res$p.value < 0.001, "< 0.001", 
+                   signif(boxm_res$p.value, 3))
+)
+```{r}
+#| label: tbl-manova-outliers
+#| tbl-cap: "Detección de outliers multivariados (Mahalanobis) por especie"
+#| warning: false
+#| message: false
+#| echo: true
+
+# Calcular Mahalanobis por especie para las dos variables log10
+out_list <- map_dfr(unique(df_manova$Species), function(sp) {
+  sub <- df_manova %>% filter(Species == sp) %>% select(all_of(vars_manova))
+  center <- colMeans(sub)
+  covm <- cov(sub)
+  m <- mahalanobis(sub, center, covm)
+  tibble(Especie = sp, idx = which(df_manova$Species == sp), 
+         mahalanobis = m)
+})
+
+# Umbral con p = 0.999 y df = número de variables (2)
+thr <- qchisq(0.999, df = length(vars_manova))
+
+outliers_tbl <- out_list %>%
+  mutate(is_outlier = mahalanobis > thr) %>%
+  filter(is_outlier) %>%
+  left_join(df_manova %>% mutate(idx = row_number()), 
+            by = c("idx" = "idx")) %>%
+  select(Especie, row = idx, mahalanobis) %>%
+  mutate(mahalanobis = round(mahalanobis, 2))
+
+if (nrow(outliers_tbl) == 0) {
+  outliers_tbl <- tibble(Especie = character(), row = integer(), 
+                         mahalanobis = numeric())
+}
+
+knitr::kable(outliers_tbl)
+
